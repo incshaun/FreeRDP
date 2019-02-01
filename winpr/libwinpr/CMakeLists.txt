@@ -124,7 +124,7 @@ if (WIN32)
   list(APPEND WINPR_LIBS "shlwapi")
 endif()
 
-add_library(${MODULE_NAME} ${WINPR_SRCS})
+add_library(${MODULE_NAME} STATIC ${WINPR_SRCS})
 set_target_properties(${MODULE_NAME} PROPERTIES LINKER_LANGUAGE C)
 set_target_properties(${MODULE_NAME} PROPERTIES OUTPUT_NAME ${MODULE_NAME}${WINPR_API_VERSION})
 if (WITH_LIBRARY_VERSIONING)
