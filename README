@@ -1,3 +1,6 @@
+Modification: Built to be integrated at runtime into other packages. Packaging dependencies to avoid external
+requirements.
+
 FreeRDP: A Remote Desktop Protocol Implementation
 =================================================
 
