@@ -110,12 +110,12 @@ static int transport_bio_simple_write(BIO* bio, const char* buf, int size)
 {
 	int error;
 	int status = 0;
-	WINPR_BIO_SIMPLE_SOCKET* ptr = (WINPR_BIO_SIMPLE_SOCKET*) BIO_get_data(bio);
+	WINPR_BIO_SIMPLE_SOCKET* ptr = (WINPR_BIO_SIMPLE_SOCKET*) VR_BIO_get_data(bio);
 
 	if (!buf)
 		return 0;
 
-	BIO_clear_flags(bio, BIO_FLAGS_WRITE);
+	VR_BIO_clear_flags(bio, BIO_FLAGS_WRITE);
 	status = _send(ptr->socket, buf, size, 0);
 
 	if (status <= 0)
@@ -125,11 +125,11 @@ static int transport_bio_simple_write(BIO* bio, const char* buf, int size)
 		if ((error == WSAEWOULDBLOCK) || (error == WSAEINTR) ||
 		    (error == WSAEINPROGRESS) || (error == WSAEALREADY))
 		{
-			BIO_set_flags(bio, (BIO_FLAGS_WRITE | BIO_FLAGS_SHOULD_RETRY));
+			VR_BIO_set_flags(bio, (BIO_FLAGS_WRITE | BIO_FLAGS_SHOULD_RETRY));
 		}
 		else
 		{
-			BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+			VR_BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 		}
 	}
 
@@ -140,12 +140,12 @@ static int transport_bio_simple_read(BIO* bio, char* buf, int size)
 {
 	int error;
 	int status = 0;
-	WINPR_BIO_SIMPLE_SOCKET* ptr = (WINPR_BIO_SIMPLE_SOCKET*) BIO_get_data(bio);
+	WINPR_BIO_SIMPLE_SOCKET* ptr = (WINPR_BIO_SIMPLE_SOCKET*) VR_BIO_get_data(bio);
 
 	if (!buf)
 		return 0;
 
-	BIO_clear_flags(bio, BIO_FLAGS_READ);
+	VR_BIO_clear_flags(bio, BIO_FLAGS_READ);
 	WSAResetEvent(ptr->hEvent);
 	status = _recv(ptr->socket, buf, size, 0);
 
@@ -156,7 +156,7 @@ static int transport_bio_simple_read(BIO* bio, char* buf, int size)
 
 	if (status == 0)
 	{
-		BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+		VR_BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 		return 0;
 	}
 
@@ -165,11 +165,11 @@ static int transport_bio_simple_read(BIO* bio, char* buf, int size)
 	if ((error == WSAEWOULDBLOCK) || (error == WSAEINTR) ||
 	    (error == WSAEINPROGRESS) || (error == WSAEALREADY))
 	{
-		BIO_set_flags(bio, (BIO_FLAGS_READ | BIO_FLAGS_SHOULD_RETRY));
+		VR_BIO_set_flags(bio, (BIO_FLAGS_READ | BIO_FLAGS_SHOULD_RETRY));
 	}
 	else
 	{
-		BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+		VR_BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 	}
 
 	return -1;
@@ -188,7 +188,7 @@ static int transport_bio_simple_gets(BIO* bio, char* str, int size)
 static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 {
 	int status = -1;
-	WINPR_BIO_SIMPLE_SOCKET* ptr = (WINPR_BIO_SIMPLE_SOCKET*) BIO_get_data(bio);
+	WINPR_BIO_SIMPLE_SOCKET* ptr = (WINPR_BIO_SIMPLE_SOCKET*) VR_BIO_get_data(bio);
 
 	if (cmd == BIO_C_SET_SOCKET)
 	{
@@ -198,7 +198,7 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 	}
 	else if (cmd == BIO_C_GET_SOCKET)
 	{
-		if (!BIO_get_init(bio) || !arg2)
+		if (!VR_BIO_get_init(bio) || !arg2)
 			return 0;
 
 		*((SOCKET*) arg2) = ptr->socket;
@@ -206,7 +206,7 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 	}
 	else if (cmd == BIO_C_GET_EVENT)
 	{
-		if (!BIO_get_init(bio) || !arg2)
+		if (!VR_BIO_get_init(bio) || !arg2)
 			return 0;
 
 		*((HANDLE*) arg2) = ptr->hEvent;
@@ -317,7 +317,7 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 			break;
 
 		case BIO_C_GET_FD:
-			if (BIO_get_init(bio))
+			if (VR_BIO_get_init(bio))
 			{
 				if (arg2)
 					*((int*) arg2) = (int) ptr->socket;
@@ -328,11 +328,11 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 			break;
 
 		case BIO_CTRL_GET_CLOSE:
-			status = BIO_get_shutdown(bio);
+			status = VR_BIO_get_shutdown(bio);
 			break;
 
 		case BIO_CTRL_SET_CLOSE:
-			BIO_set_shutdown(bio, (int) arg1);
+			VR_BIO_set_shutdown(bio, (int) arg1);
 			status = 1;
 			break;
 
@@ -354,11 +354,11 @@ static long transport_bio_simple_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 
 static int transport_bio_simple_init(BIO* bio, SOCKET socket, int shutdown)
 {
-	WINPR_BIO_SIMPLE_SOCKET* ptr = (WINPR_BIO_SIMPLE_SOCKET*) BIO_get_data(bio);
+	WINPR_BIO_SIMPLE_SOCKET* ptr = (WINPR_BIO_SIMPLE_SOCKET*) VR_BIO_get_data(bio);
 	ptr->socket = socket;
-	BIO_set_shutdown(bio, shutdown);
-	BIO_set_flags(bio, BIO_FLAGS_SHOULD_RETRY);
-	BIO_set_init(bio, 1);
+	VR_BIO_set_shutdown(bio, shutdown);
+	VR_BIO_set_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+	VR_BIO_set_init(bio, 1);
 	ptr->hEvent = WSACreateEvent();
 
 	if (!ptr->hEvent)
@@ -376,11 +376,11 @@ static int transport_bio_simple_init(BIO* bio, SOCKET socket, int shutdown)
 
 static int transport_bio_simple_uninit(BIO* bio)
 {
-	WINPR_BIO_SIMPLE_SOCKET* ptr = (WINPR_BIO_SIMPLE_SOCKET*) BIO_get_data(bio);
+	WINPR_BIO_SIMPLE_SOCKET* ptr = (WINPR_BIO_SIMPLE_SOCKET*) VR_BIO_get_data(bio);
 
-	if (BIO_get_shutdown(bio))
+	if (VR_BIO_get_shutdown(bio))
 	{
-		if (BIO_get_init(bio) && ptr)
+		if (VR_BIO_get_init(bio) && ptr)
 		{
 			_shutdown(ptr->socket, SD_BOTH);
 			closesocket(ptr->socket);
@@ -394,21 +394,21 @@ static int transport_bio_simple_uninit(BIO* bio)
 		ptr->hEvent = NULL;
 	}
 
-	BIO_set_init(bio, 0);
-	BIO_set_flags(bio, 0);
+	VR_BIO_set_init(bio, 0);
+	VR_BIO_set_flags(bio, 0);
 	return 1;
 }
 
 static int transport_bio_simple_new(BIO* bio)
 {
 	WINPR_BIO_SIMPLE_SOCKET* ptr;
-	BIO_set_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+	VR_BIO_set_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 	ptr = (WINPR_BIO_SIMPLE_SOCKET*) calloc(1, sizeof(WINPR_BIO_SIMPLE_SOCKET));
 
 	if (!ptr)
 		return 0;
 
-	BIO_set_data(bio, ptr);
+	VR_BIO_set_data(bio, ptr);
 	return 1;
 }
 
@@ -420,11 +420,11 @@ static int transport_bio_simple_free(BIO* bio)
 		return 0;
 
 	transport_bio_simple_uninit(bio);
-	ptr = (WINPR_BIO_SIMPLE_SOCKET*) BIO_get_data(bio);
+	ptr = (WINPR_BIO_SIMPLE_SOCKET*) VR_BIO_get_data(bio);
 
 	if (ptr)
 	{
-		BIO_set_data(bio, NULL);
+		VR_BIO_set_data(bio, NULL);
 		free(ptr);
 	}
 
@@ -437,16 +437,16 @@ BIO_METHOD* BIO_s_simple_socket(void)
 
 	if (bio_methods == NULL)
 	{
-		if (!(bio_methods = BIO_meth_new(BIO_TYPE_SIMPLE, "SimpleSocket")))
+		if (!(bio_methods = VR_BIO_meth_new(BIO_TYPE_SIMPLE, "SimpleSocket")))
 			return NULL;
 
-		BIO_meth_set_write(bio_methods, transport_bio_simple_write);
-		BIO_meth_set_read(bio_methods, transport_bio_simple_read);
-		BIO_meth_set_puts(bio_methods, transport_bio_simple_puts);
-		BIO_meth_set_gets(bio_methods, transport_bio_simple_gets);
-		BIO_meth_set_ctrl(bio_methods, transport_bio_simple_ctrl);
-		BIO_meth_set_create(bio_methods, transport_bio_simple_new);
-		BIO_meth_set_destroy(bio_methods, transport_bio_simple_free);
+		VR_BIO_meth_set_write(bio_methods, transport_bio_simple_write);
+		VR_BIO_meth_set_read(bio_methods, transport_bio_simple_read);
+		VR_BIO_meth_set_puts(bio_methods, transport_bio_simple_puts);
+		VR_BIO_meth_set_gets(bio_methods, transport_bio_simple_gets);
+		VR_BIO_meth_set_ctrl(bio_methods, transport_bio_simple_ctrl);
+		VR_BIO_meth_set_create(bio_methods, transport_bio_simple_new);
+		VR_BIO_meth_set_destroy(bio_methods, transport_bio_simple_free);
 	}
 
 	return bio_methods;
@@ -476,11 +476,11 @@ static int transport_bio_buffered_write(BIO* bio, const char* buf, int num)
 	int nchunks;
 	int committedBytes;
 	DataChunk chunks[2];
-	WINPR_BIO_BUFFERED_SOCKET* ptr = (WINPR_BIO_BUFFERED_SOCKET*) BIO_get_data(bio);
+	WINPR_BIO_BUFFERED_SOCKET* ptr = (WINPR_BIO_BUFFERED_SOCKET*) VR_BIO_get_data(bio);
 	BIO* next_bio = NULL;
 	ret = num;
 	ptr->writeBlocked = FALSE;
-	BIO_clear_flags(bio, BIO_FLAGS_WRITE);
+	VR_BIO_clear_flags(bio, BIO_FLAGS_WRITE);
 
 	/* we directly append extra bytes in the xmit buffer, this could be prevented
 	 * but for now it makes the code more simple.
@@ -493,26 +493,26 @@ static int transport_bio_buffered_write(BIO* bio, const char* buf, int num)
 
 	committedBytes = 0;
 	nchunks = ringbuffer_peek(&ptr->xmitBuffer, chunks, ringbuffer_used(&ptr->xmitBuffer));
-	next_bio = BIO_next(bio);
+	next_bio = VR_BIO_next(bio);
 
 	for (i = 0; i < nchunks; i++)
 	{
 		while (chunks[i].size)
 		{
-			status = BIO_write(next_bio, chunks[i].data, chunks[i].size);
+			status = VR_BIO_write(next_bio, chunks[i].data, chunks[i].size);
 
 			if (status <= 0)
 			{
-				if (!BIO_should_retry(next_bio))
+				if (!VR_BIO_should_retry(next_bio))
 				{
-					BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+					VR_BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 					ret = -1; /* fatal error */
 					goto out;
 				}
 
-				if (BIO_should_write(next_bio))
+				if (VR_BIO_should_write(next_bio))
 				{
-					BIO_set_flags(bio, BIO_FLAGS_WRITE);
+					VR_BIO_set_flags(bio, BIO_FLAGS_WRITE);
 					ptr->writeBlocked = TRUE;
 					goto out; /* EWOULDBLOCK */
 				}
@@ -532,25 +532,25 @@ out:
 static int transport_bio_buffered_read(BIO* bio, char* buf, int size)
 {
 	int status;
-	WINPR_BIO_BUFFERED_SOCKET* ptr = (WINPR_BIO_BUFFERED_SOCKET*) BIO_get_data(bio);
-	BIO* next_bio = BIO_next(bio);
+	WINPR_BIO_BUFFERED_SOCKET* ptr = (WINPR_BIO_BUFFERED_SOCKET*) VR_BIO_get_data(bio);
+	BIO* next_bio = VR_BIO_next(bio);
 	ptr->readBlocked = FALSE;
-	BIO_clear_flags(bio, BIO_FLAGS_READ);
-	status = BIO_read(next_bio, buf, size);
+	VR_BIO_clear_flags(bio, BIO_FLAGS_READ);
+	status = VR_BIO_read(next_bio, buf, size);
 
 	if (status <= 0)
 	{
-		if (!BIO_should_retry(next_bio))
+		if (!VR_BIO_should_retry(next_bio))
 		{
-			BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+			VR_BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 			goto out;
 		}
 
-		BIO_set_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+		VR_BIO_set_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 
-		if (BIO_should_read(next_bio))
+		if (VR_BIO_should_read(next_bio))
 		{
-			BIO_set_flags(bio, BIO_FLAGS_READ);
+			VR_BIO_set_flags(bio, BIO_FLAGS_READ);
 			ptr->readBlocked = TRUE;
 			goto out;
 		}
@@ -573,7 +573,7 @@ static int transport_bio_buffered_gets(BIO* bio, char* str, int size)
 static long transport_bio_buffered_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 {
 	int status = -1;
-	WINPR_BIO_BUFFERED_SOCKET* ptr = (WINPR_BIO_BUFFERED_SOCKET*) BIO_get_data(bio);
+	WINPR_BIO_BUFFERED_SOCKET* ptr = (WINPR_BIO_BUFFERED_SOCKET*) VR_BIO_get_data(bio);
 
 	switch (cmd)
 	{
@@ -602,7 +602,7 @@ static long transport_bio_buffered_ctrl(BIO* bio, int cmd, long arg1, void* arg2
 			break;
 
 		default:
-			status = BIO_ctrl(BIO_next(bio), cmd, arg1, arg2);
+			status = VR_BIO_ctrl(VR_BIO_next(bio), cmd, arg1, arg2);
 			break;
 	}
 
@@ -612,14 +612,14 @@ static long transport_bio_buffered_ctrl(BIO* bio, int cmd, long arg1, void* arg2
 static int transport_bio_buffered_new(BIO* bio)
 {
 	WINPR_BIO_BUFFERED_SOCKET* ptr;
-	BIO_set_init(bio, 1);
-	BIO_set_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+	VR_BIO_set_init(bio, 1);
+	VR_BIO_set_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 	ptr = (WINPR_BIO_BUFFERED_SOCKET*) calloc(1, sizeof(WINPR_BIO_BUFFERED_SOCKET));
 
 	if (!ptr)
 		return -1;
 
-	BIO_set_data(bio, (void*) ptr);
+	VR_BIO_set_data(bio, (void*) ptr);
 
 	if (!ringbuffer_init(&ptr->xmitBuffer, 0x10000))
 		return -1;
@@ -632,7 +632,7 @@ static int transport_bio_buffered_new(BIO* bio)
  * let BIO_free_all handle that. */
 static int transport_bio_buffered_free(BIO* bio)
 {
-	WINPR_BIO_BUFFERED_SOCKET* ptr = (WINPR_BIO_BUFFERED_SOCKET*) BIO_get_data(bio);
+	WINPR_BIO_BUFFERED_SOCKET* ptr = (WINPR_BIO_BUFFERED_SOCKET*) VR_BIO_get_data(bio);
 
 	if (!ptr)
 		return 0;
@@ -648,16 +648,16 @@ BIO_METHOD* BIO_s_buffered_socket(void)
 
 	if (bio_methods == NULL)
 	{
-		if (!(bio_methods = BIO_meth_new(BIO_TYPE_BUFFERED, "BufferedSocket")))
+		if (!(bio_methods = VR_BIO_meth_new(BIO_TYPE_BUFFERED, "BufferedSocket")))
 			return NULL;
 
-		BIO_meth_set_write(bio_methods, transport_bio_buffered_write);
-		BIO_meth_set_read(bio_methods, transport_bio_buffered_read);
-		BIO_meth_set_puts(bio_methods, transport_bio_buffered_puts);
-		BIO_meth_set_gets(bio_methods, transport_bio_buffered_gets);
-		BIO_meth_set_ctrl(bio_methods, transport_bio_buffered_ctrl);
-		BIO_meth_set_create(bio_methods, transport_bio_buffered_new);
-		BIO_meth_set_destroy(bio_methods, transport_bio_buffered_free);
+		VR_BIO_meth_set_write(bio_methods, transport_bio_buffered_write);
+		VR_BIO_meth_set_read(bio_methods, transport_bio_buffered_read);
+		VR_BIO_meth_set_puts(bio_methods, transport_bio_buffered_puts);
+		VR_BIO_meth_set_gets(bio_methods, transport_bio_buffered_gets);
+		VR_BIO_meth_set_ctrl(bio_methods, transport_bio_buffered_ctrl);
+		VR_BIO_meth_set_create(bio_methods, transport_bio_buffered_new);
+		VR_BIO_meth_set_destroy(bio_methods, transport_bio_buffered_free);
 	}
 
 	return bio_methods;

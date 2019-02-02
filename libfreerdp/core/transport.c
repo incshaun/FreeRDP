@@ -155,7 +155,7 @@ static void transport_ssl_cb(SSL* ssl, int where, int ret)
 {
 	if (where & SSL_CB_ALERT)
 	{
-		rdpTransport* transport = (rdpTransport*) SSL_get_app_data(ssl);
+		rdpTransport* transport = (rdpTransport*) VR_SSL_get_app_data(ssl);
 
 		switch (ret)
 		{
@@ -198,7 +198,7 @@ static void transport_ssl_cb(SSL* ssl, int where, int ret)
 
 				default:
 					WLog_Print(transport->log, WLOG_WARN, "Unhandled SSL error (where=%d, ret=%d [%s, %s])", where, ret,
-					           SSL_alert_type_string_long(ret), SSL_alert_desc_string_long(ret));
+					           VR_SSL_alert_type_string_long(ret), VR_SSL_alert_desc_string_long(ret));
 					break;
 				}
 		}
@@ -226,24 +226,24 @@ BOOL transport_attach(rdpTransport* transport, int sockfd)
 {
 	BIO* socketBio = NULL;
 	BIO* bufferedBio;
-	socketBio = BIO_new(BIO_s_simple_socket());
+	socketBio = VR_BIO_new(BIO_s_simple_socket());
 
 	if (!socketBio)
 		goto fail;
 
-	BIO_set_fd(socketBio, sockfd, BIO_CLOSE);
-	bufferedBio = BIO_new(BIO_s_buffered_socket());
+	VR_BIO_set_fd(socketBio, sockfd, BIO_CLOSE);
+	bufferedBio = VR_BIO_new(BIO_s_buffered_socket());
 
 	if (!bufferedBio)
 		goto fail;
 
-	bufferedBio = BIO_push(bufferedBio, socketBio);
+	bufferedBio = VR_BIO_push(bufferedBio, socketBio);
 	transport->frontBio = bufferedBio;
 	return TRUE;
 fail:
 
 	if (socketBio)
-		BIO_free_all(socketBio);
+		VR_BIO_free_all(socketBio);
 	else
 		close(sockfd);
 
@@ -299,9 +299,9 @@ BOOL transport_connect_tls(rdpTransport* transport)
 	}
 
 	transport->frontBio = tls->bio;
-	BIO_callback_ctrl(tls->bio, BIO_CTRL_SET_CALLBACK,
+	VR_BIO_callback_ctrl(tls->bio, BIO_CTRL_SET_CALLBACK,
 	                  (bio_info_cb*) transport_ssl_cb);
-	SSL_set_app_data(tls->ssl, transport);
+	VR_SSL_set_app_data(tls->ssl, transport);
 
 	if (!transport->frontBio)
 	{
@@ -521,7 +521,7 @@ static void transport_bio_error_log(rdpTransport* transport, LPCSTR biofunc, BIO
 	if (level < WLog_GetLogLevel(transport->log))
 		return;
 
-	if (ERR_peek_error() == 0)
+	if (VR_ERR_peek_error() == 0)
 	{
 		const char* fmt = "%s returned a system error %d: %s";
 		WLog_PrintMessage(transport->log, WLOG_MESSAGE_TEXT, level, line, file, func, fmt, biofunc,
@@ -535,9 +535,9 @@ static void transport_bio_error_log(rdpTransport* transport, LPCSTR biofunc, BIO
 	{
 		const char* fmt = "%s returned an error: %s";
 
-		while ((sslerr = ERR_get_error()))
+		while ((sslerr = VR_ERR_get_error()))
 		{
-			ERR_error_string_n(sslerr, buf, 120);
+			VR_ERR_error_string_n(sslerr, buf, 120);
 			WLog_PrintMessage(transport->log, WLOG_MESSAGE_TEXT, level, line, file, func, fmt, biofunc,
 			                  buf);
 		}
@@ -559,11 +559,11 @@ int transport_read_layer(rdpTransport* transport, BYTE* data, int bytes)
 
 	while (read < bytes)
 	{
-		status = BIO_read(transport->frontBio, data + read, bytes - read);
+		status = VR_BIO_read(transport->frontBio, data + read, bytes - read);
 
 		if (status <= 0)
 		{
-			if (!transport->frontBio || !BIO_should_retry(transport->frontBio))
+			if (!transport->frontBio || !VR_BIO_should_retry(transport->frontBio))
 			{
 				/* something unexpected happened, let's close */
 				if (!transport->frontBio)
@@ -813,7 +813,7 @@ int transport_write(rdpTransport* transport, wStream* s)
 
 	while (length > 0)
 	{
-		status = BIO_write(transport->frontBio, Stream_Pointer(s), length);
+		status = VR_BIO_write(transport->frontBio, Stream_Pointer(s), length);
 
 		if (status <= 0)
 		{
@@ -821,7 +821,7 @@ int transport_write(rdpTransport* transport, wStream* s)
 			 * so a retry means that for any reason we need to read. The most probable
 			 * is a SSL or TSG BIO in the chain.
 			 */
-			if (!BIO_should_retry(transport->frontBio))
+			if (!VR_BIO_should_retry(transport->frontBio))
 			{
 				WLog_ERR_BIO(transport, "BIO_should_retry", transport->frontBio);
 				goto out_cleanup;
@@ -855,7 +855,7 @@ int transport_write(rdpTransport* transport, wStream* s)
 					goto out_cleanup;
 				}
 
-				if (BIO_flush(transport->frontBio) < 1)
+				if (VR_BIO_flush(transport->frontBio) < 1)
 				{
 					WLog_Print(transport->log, WLOG_ERROR, "error when flushing outputBuffer");
 					status = -1;
@@ -973,7 +973,7 @@ int transport_drain_output_buffer(rdpTransport* transport)
 
 	if (BIO_write_blocked(transport->frontBio))
 	{
-		if (BIO_flush(transport->frontBio) < 1)
+		if (VR_BIO_flush(transport->frontBio) < 1)
 			return -1;
 
 		status |= BIO_write_blocked(transport->frontBio);
@@ -1099,7 +1099,7 @@ BOOL transport_disconnect(rdpTransport* transport)
 	else
 	{
 		if (transport->frontBio)
-			BIO_free_all(transport->frontBio);
+			VR_BIO_free_all(transport->frontBio);
 	}
 
 	if (transport->tsg)

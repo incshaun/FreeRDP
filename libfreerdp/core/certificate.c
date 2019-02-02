@@ -710,13 +710,13 @@ rdpRsaKey* key_new_from_content(const char* keycontent, const char* keyfile)
 	if (!key)
 		return NULL;
 
-	bio = BIO_new_mem_buf((void*)keycontent, strlen(keycontent));
+	bio = VR_BIO_new_mem_buf((void*)keycontent, strlen(keycontent));
 
 	if (!bio)
 		goto out_free;
 
-	rsa = PEM_read_bio_RSAPrivateKey(bio, NULL, NULL, NULL);
-	BIO_free_all(bio);
+	rsa = VR_PEM_read_bio_RSAPrivateKey(bio, NULL, NULL, NULL);
+	VR_BIO_free_all(bio);
 
 	if (!rsa)
 	{
@@ -724,7 +724,7 @@ rdpRsaKey* key_new_from_content(const char* keycontent, const char* keyfile)
 		goto out_free;
 	}
 
-	switch (RSA_check_key(rsa))
+	switch (VR_RSA_check_key(rsa))
 	{
 		case 0:
 			WLog_ERR(TAG, "invalid RSA key in %s", keyfile);
@@ -739,39 +739,39 @@ rdpRsaKey* key_new_from_content(const char* keycontent, const char* keyfile)
 			goto out_free_rsa;
 	}
 
-	RSA_get0_key(rsa, &rsa_n, &rsa_e, &rsa_d);
+	VR_RSA_get0_key(rsa, &rsa_n, &rsa_e, &rsa_d);
 
-	if (BN_num_bytes(rsa_e) > 4)
+	if (VR_BN_num_bytes(rsa_e) > 4)
 	{
 		WLog_ERR(TAG, "RSA public exponent too large in %s", keyfile);
 		goto out_free_rsa;
 	}
 
-	key->ModulusLength = BN_num_bytes(rsa_n);
+	key->ModulusLength = VR_BN_num_bytes(rsa_n);
 	key->Modulus = (BYTE*) malloc(key->ModulusLength);
 
 	if (!key->Modulus)
 		goto out_free_rsa;
 
-	BN_bn2bin(rsa_n, key->Modulus);
+	VR_BN_bn2bin(rsa_n, key->Modulus);
 	crypto_reverse(key->Modulus, key->ModulusLength);
-	key->PrivateExponentLength = BN_num_bytes(rsa_d);
+	key->PrivateExponentLength = VR_BN_num_bytes(rsa_d);
 	key->PrivateExponent = (BYTE*) malloc(key->PrivateExponentLength);
 
 	if (!key->PrivateExponent)
 		goto out_free_modulus;
 
-	BN_bn2bin(rsa_d, key->PrivateExponent);
+	VR_BN_bn2bin(rsa_d, key->PrivateExponent);
 	crypto_reverse(key->PrivateExponent, key->PrivateExponentLength);
 	memset(key->exponent, 0, sizeof(key->exponent));
-	BN_bn2bin(rsa_e, key->exponent + sizeof(key->exponent) - BN_num_bytes(rsa_e));
+	VR_BN_bn2bin(rsa_e, key->exponent + sizeof(key->exponent) - VR_BN_num_bytes(rsa_e));
 	crypto_reverse(key->exponent, sizeof(key->exponent));
-	RSA_free(rsa);
+	VR_RSA_free(rsa);
 	return key;
 out_free_modulus:
 	free(key->Modulus);
 out_free_rsa:
-	RSA_free(rsa);
+	VR_RSA_free(rsa);
 out_free:
 	free(key);
 	return NULL;

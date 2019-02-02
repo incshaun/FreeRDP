@@ -321,15 +321,15 @@ static int x509_add_ext(X509* cert, int nid, char* value)
 	if (!cert || !value)
 		return 0;
 
-	X509V3_set_ctx_nodb(&ctx);
-	X509V3_set_ctx(&ctx, cert, cert, NULL, NULL, 0);
-	ext = X509V3_EXT_conf_nid(NULL, &ctx, nid, value);
+	VR_X509V3_set_ctx_nodb(&ctx);
+	VR_X509V3_set_ctx(&ctx, cert, cert, NULL, NULL, 0);
+	ext = VR_X509V3_EXT_conf_nid(NULL, &ctx, nid, value);
 
 	if (!ext)
 		return 0;
 
-	X509_add_ext(cert, ext, -1);
-	X509_EXTENSION_free(ext);
+	VR_X509_add_ext(cert, ext, -1);
+	VR_X509_EXTENSION_free(ext);
 	return 1;
 }
 #endif
@@ -645,22 +645,22 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 			OpenSSL_add_all_ciphers();
 			OpenSSL_add_all_digests();
 #else
-			OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS \
+			VR_OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS \
 			                    | OPENSSL_INIT_ADD_ALL_DIGESTS \
 			                    | OPENSSL_INIT_LOAD_CONFIG, NULL);
 #endif
-			context->pkcs12 = PKCS12_create(context->password, context->default_name,
+			context->pkcs12 = VR_PKCS12_create(context->password, context->default_name,
 			                                context->pkey, context->x509, NULL, 0, 0, 0, 0, 0);
 
 			if (!context->pkcs12)
 				goto out_fail;
 
-			bio = BIO_new(BIO_s_mem());
+			bio = VR_BIO_new(VR_BIO_s_mem());
 
 			if (!bio)
 				goto out_fail;
 
-			status = i2d_PKCS12_bio(bio, context->pkcs12);
+			status = VR_i2d_PKCS12_bio(bio, context->pkcs12);
 
 			if (status != 1)
 				goto out_fail;
@@ -672,7 +672,7 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 			if (!x509_str)
 				goto out_fail;
 
-			status = BIO_read(bio, x509_str, length);
+			status = VR_BIO_read(bio, x509_str, length);
 
 			if (status < 0)
 				goto out_fail;
@@ -694,7 +694,7 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 
 				length = new_len;
 				x509_str = new_str;
-				status = BIO_read(bio, &x509_str[offset], length);
+				status = VR_BIO_read(bio, &x509_str[offset], length);
 
 				if (status < 0)
 					break;
@@ -712,12 +712,12 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 		}
 		else
 		{
-			bio = BIO_new(BIO_s_mem());
+			bio = VR_BIO_new(VR_BIO_s_mem());
 
 			if (!bio)
 				goto out_fail;
 
-			if (!PEM_write_bio_X509(bio, context->x509))
+			if (!VR_PEM_write_bio_X509(bio, context->x509))
 				goto out_fail;
 
 			offset = 0;
@@ -727,7 +727,7 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 			if (!x509_str)
 				goto out_fail;
 
-			status = BIO_read(bio, x509_str, length);
+			status = VR_BIO_read(bio, x509_str, length);
 
 			if (status < 0)
 				goto out_fail;
@@ -749,7 +749,7 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 
 				length = new_len;
 				x509_str = new_str;
-				status = BIO_read(bio, &x509_str[offset], length);
+				status = VR_BIO_read(bio, &x509_str[offset], length);
 
 				if (status < 0)
 					break;
@@ -767,17 +767,17 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 
 			free(x509_str);
 			x509_str = NULL;
-			BIO_free_all(bio);
+			VR_BIO_free_all(bio);
 			bio = NULL;
 
 			if (context->pemFormat)
 			{
-				bio = BIO_new(BIO_s_mem());
+				bio = VR_BIO_new(VR_BIO_s_mem());
 
 				if (!bio)
 					goto out_fail;
 
-				status = PEM_write_bio_PrivateKey(bio, context->pkey, NULL, NULL, 0, NULL, NULL);
+				status = VR_PEM_write_bio_PrivateKey(bio, context->pkey, NULL, NULL, 0, NULL, NULL);
 
 				if (status < 0)
 					goto out_fail;
@@ -788,7 +788,7 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 				if (!(x509_str = (BYTE*) malloc(length)))
 					goto out_fail;
 
-				status = BIO_read(bio, x509_str, length);
+				status = VR_BIO_read(bio, x509_str, length);
 
 				if (status < 0)
 					goto out_fail;
@@ -810,7 +810,7 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 
 					length = new_len;
 					x509_str = new_str;
-					status = BIO_read(bio, &x509_str[offset], length);
+					status = VR_BIO_read(bio, &x509_str[offset], length);
 
 					if (status < 0)
 						break;
@@ -831,7 +831,7 @@ int makecert_context_output_certificate_file(MAKECERT_CONTEXT* context, char* pa
 
 	ret = 1;
 out_fail:
-	BIO_free_all(bio);
+	VR_BIO_free_all(bio);
 
 	if (fp)
 		fclose(fp);
@@ -893,12 +893,12 @@ int makecert_context_output_private_key_file(MAKECERT_CONTEXT* context, char* pa
 	if (!fp)
 		goto out_fail;
 
-	bio = BIO_new(BIO_s_mem());
+	bio = VR_BIO_new(VR_BIO_s_mem());
 
 	if (!bio)
 		goto out_fail;
 
-	if (!PEM_write_bio_PrivateKey(bio, context->pkey, NULL, NULL, 0, NULL, NULL))
+	if (!VR_PEM_write_bio_PrivateKey(bio, context->pkey, NULL, NULL, 0, NULL, NULL))
 		goto out_fail;
 
 	offset = 0;
@@ -908,7 +908,7 @@ int makecert_context_output_private_key_file(MAKECERT_CONTEXT* context, char* pa
 	if (!x509_str)
 		goto out_fail;
 
-	status = BIO_read(bio, x509_str, length);
+	status = VR_BIO_read(bio, x509_str, length);
 
 	if (status < 0)
 		goto out_fail;
@@ -930,7 +930,7 @@ int makecert_context_output_private_key_file(MAKECERT_CONTEXT* context, char* pa
 
 		length = new_len;
 		x509_str = new_str;
-		status = BIO_read(bio, &x509_str[offset], length);
+		status = VR_BIO_read(bio, &x509_str[offset], length);
 
 		if (status < 0)
 			break;
@@ -952,7 +952,7 @@ out_fail:
 	if (fp)
 		fclose(fp);
 
-	BIO_free_all(bio);
+	VR_BIO_free_all(bio);
 	free(x509_str);
 	free(filename);
 	free(fullpath);
@@ -1004,13 +1004,13 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 	}
 
 	if (!context->pkey)
-		context->pkey = EVP_PKEY_new();
+		context->pkey = VR_EVP_PKEY_new();
 
 	if (!context->pkey)
 		return -1;
 
 	if (!context->x509)
-		context->x509 = X509_new();
+		context->x509 = VR_X509_new();
 
 	if (!context->x509)
 		return -1;
@@ -1027,37 +1027,37 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 	}
 
 #if (OPENSSL_VERSION_NUMBER < 0x10100000L) || defined(LIBRESSL_VERSION_NUMBER)
-	context->rsa = RSA_generate_key(key_length, RSA_F4, NULL, NULL);
+	context->rsa = VR_RSA_generate_key(key_length, RSA_F4, NULL, NULL);
 #else
 	{
-		BIGNUM* rsa = BN_secure_new();
+		BIGNUM* rsa = VR_BN_secure_new();
 		int rc;
 
 		if (!rsa)
 			return -1;
 
-		context->rsa = RSA_new();
+		context->rsa = VR_RSA_new();
 
 		if (!context->rsa)
 		{
-			BN_clear_free(rsa);
+			VR_BN_clear_free(rsa);
 			return -1;
 		}
 
-		BN_set_word(rsa, RSA_F4);
-		rc = RSA_generate_key_ex(context->rsa, key_length, rsa, NULL);
-		BN_clear_free(rsa);
+		VR_BN_set_word(rsa, RSA_F4);
+		rc = VR_RSA_generate_key_ex(context->rsa, key_length, rsa, NULL);
+		VR_BN_clear_free(rsa);
 
 		if (rc != 1)
 			return -1;
 	}
 #endif
 
-	if (!EVP_PKEY_assign_RSA(context->pkey, context->rsa))
+	if (!VR_EVP_PKEY_assign_RSA(context->pkey, context->rsa))
 		return -1;
 
 	context->rsa = NULL;
-	X509_set_version(context->x509, 2);
+	VR_X509_set_version(context->x509, 2);
 	arg = CommandLineFindArgumentA(args, "#");
 
 	if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
@@ -1070,26 +1070,26 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 	else
 		serial = (long) GetTickCount64();
 
-	ASN1_INTEGER_set(X509_get_serialNumber(context->x509), serial);
+	VR_ASN1_INTEGER_set(VR_X509_get_serialNumber(context->x509), serial);
 	{
 		ASN1_TIME* before;
 		ASN1_TIME* after;
 #if (OPENSSL_VERSION_NUMBER < 0x10100000L) || defined(LIBRESSL_VERSION_NUMBER)
-		before = X509_get_notBefore(context->x509);
-		after = X509_get_notAfter(context->x509);
+		before = VR_X509_get_notBefore(context->x509);
+		after = VR_X509_get_notAfter(context->x509);
 #else
-		before = X509_getm_notBefore(context->x509);
-		after = X509_getm_notAfter(context->x509);
+		before = VR_X509_getm_notBefore(context->x509);
+		after = VR_X509_getm_notAfter(context->x509);
 #endif
-		X509_gmtime_adj(before, 0);
+		VR_X509_gmtime_adj(before, 0);
 
 		if (context->duration_months)
-			X509_gmtime_adj(after, (long)(60 * 60 * 24 * 31 * context->duration_months));
+			VR_X509_gmtime_adj(after, (long)(60 * 60 * 24 * 31 * context->duration_months));
 		else if (context->duration_years)
-			X509_gmtime_adj(after, (long)(60 * 60 * 24 * 365 * context->duration_years));
+			VR_X509_gmtime_adj(after, (long)(60 * 60 * 24 * 365 * context->duration_years));
 	}
-	X509_set_pubkey(context->x509, context->pkey);
-	name = X509_get_subject_name(context->x509);
+	VR_X509_set_pubkey(context->x509, context->pkey);
+	name = VR_X509_get_subject_name(context->x509);
 	arg = CommandLineFindArgumentA(args, "n");
 
 	if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
@@ -1097,59 +1097,59 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 		entry = x509_name_parse(arg->Value, "C", &length);
 
 		if (entry)
-			X509_NAME_add_entry_by_txt(name, "C", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
+			VR_X509_NAME_add_entry_by_txt(name, "C", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
 
 		entry = x509_name_parse(arg->Value, "ST", &length);
 
 		if (entry)
-			X509_NAME_add_entry_by_txt(name, "ST", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
+			VR_X509_NAME_add_entry_by_txt(name, "ST", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
 
 		entry = x509_name_parse(arg->Value, "L", &length);
 
 		if (entry)
-			X509_NAME_add_entry_by_txt(name, "L", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
+			VR_X509_NAME_add_entry_by_txt(name, "L", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
 
 		entry = x509_name_parse(arg->Value, "O", &length);
 
 		if (entry)
-			X509_NAME_add_entry_by_txt(name, "O", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
+			VR_X509_NAME_add_entry_by_txt(name, "O", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
 
 		entry = x509_name_parse(arg->Value, "OU", &length);
 
 		if (entry)
-			X509_NAME_add_entry_by_txt(name, "OU", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
+			VR_X509_NAME_add_entry_by_txt(name, "OU", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
 
 		entry = context->common_name;
 		length = strlen(entry);
-		X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
+		VR_X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
 	}
 	else
 	{
 		entry = context->common_name;
 		length = strlen(entry);
-		X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
+		VR_X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_UTF8, (const unsigned char*) entry, length, -1, 0);
 	}
 
-	X509_set_issuer_name(context->x509, name);
+	VR_X509_set_issuer_name(context->x509, name);
 	x509_add_ext(context->x509, NID_ext_key_usage, "serverAuth");
 	arg = CommandLineFindArgumentA(args, "a");
-	md = EVP_sha256();
+	md = VR_EVP_sha256();
 
 	if (arg->Flags & COMMAND_LINE_VALUE_PRESENT)
 	{
 		if (strcmp(arg->Value, "md5") == 0)
-			md = EVP_md5();
+			md = VR_EVP_md5();
 		else if (strcmp(arg->Value, "sha1") == 0)
-			md = EVP_sha1();
+			md = VR_EVP_sha1();
 		else if (strcmp(arg->Value, "sha256") == 0)
-			md = EVP_sha256();
+			md = VR_EVP_sha256();
 		else if (strcmp(arg->Value, "sha384") == 0)
-			md = EVP_sha384();
+			md = VR_EVP_sha384();
 		else if (strcmp(arg->Value, "sha512") == 0)
-			md = EVP_sha512();
+			md = VR_EVP_sha512();
 	}
 
-	if (!X509_sign(context->x509, context->pkey, md))
+	if (!VR_X509_sign(context->x509, context->pkey, md))
 		return -1;
 
 	/**
@@ -1163,16 +1163,16 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 		int length;
 		int offset;
 		BYTE* x509_str;
-		bio = BIO_new(BIO_s_mem());
+		bio = VR_BIO_new(VR_BIO_s_mem());
 
 		if (!bio)
 			return -1;
 
-		status = X509_print(bio, context->x509);
+		status = VR_X509_print(bio, context->x509);
 
 		if (status < 0)
 		{
-			BIO_free_all(bio);
+			VR_BIO_free_all(bio);
 			return -1;
 		}
 
@@ -1181,15 +1181,15 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 
 		if (!(x509_str = (BYTE*) malloc(length + 1)))
 		{
-			BIO_free_all(bio);
+			VR_BIO_free_all(bio);
 			return -1;
 		}
 
-		status = BIO_read(bio, x509_str, length);
+		status = VR_BIO_read(bio, x509_str, length);
 
 		if (status < 0)
 		{
-			BIO_free_all(bio);
+			VR_BIO_free_all(bio);
 			free(x509_str);
 			return -1;
 		}
@@ -1210,7 +1210,7 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 			}
 
 			x509_str = new_str;
-			status = BIO_read(bio, &x509_str[offset], new_len);
+			status = VR_BIO_read(bio, &x509_str[offset], new_len);
 
 			if (status < 0)
 				break;
@@ -1226,7 +1226,7 @@ int makecert_context_process(MAKECERT_CONTEXT* context, int argc, char** argv)
 		x509_str[length] = '\0';
 		printf("%s", x509_str);
 		free(x509_str);
-		BIO_free_all(bio);
+		VR_BIO_free_all(bio);
 	}
 
 	/**
@@ -1271,8 +1271,8 @@ void makecert_context_free(MAKECERT_CONTEXT* context)
 		free(context->output_file);
 		free(context->output_path);
 #ifdef WITH_OPENSSL
-		X509_free(context->x509);
-		EVP_PKEY_free(context->pkey);
+		VR_X509_free(context->x509);
+		VR_EVP_PKEY_free(context->pkey);
 #if (OPENSSL_VERSION_NUMBER < 0x10100000L) || defined(LIBRESSL_VERSION_NUMBER)
 		CRYPTO_cleanup_all_ex_data();
 #endif

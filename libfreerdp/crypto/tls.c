@@ -90,15 +90,15 @@ static int bio_rdp_tls_write(BIO* bio, const char* buf, int size)
 {
 	int error;
 	int status;
-	BIO_RDP_TLS* tls = (BIO_RDP_TLS*) BIO_get_data(bio);
+	BIO_RDP_TLS* tls = (BIO_RDP_TLS*) VR_BIO_get_data(bio);
 
 	if (!buf || !tls)
 		return 0;
 
-	BIO_clear_flags(bio, BIO_FLAGS_WRITE | BIO_FLAGS_READ | BIO_FLAGS_IO_SPECIAL);
+	VR_BIO_clear_flags(bio, BIO_FLAGS_WRITE | BIO_FLAGS_READ | BIO_FLAGS_IO_SPECIAL);
 	EnterCriticalSection(&tls->lock);
-	status = SSL_write(tls->ssl, buf, size);
-	error = SSL_get_error(tls->ssl, status);
+	status = VR_SSL_write(tls->ssl, buf, size);
+	error = VR_SSL_get_error(tls->ssl, status);
 	LeaveCriticalSection(&tls->lock);
 
 	if (status <= 0)
@@ -106,33 +106,33 @@ static int bio_rdp_tls_write(BIO* bio, const char* buf, int size)
 		switch (error)
 		{
 			case SSL_ERROR_NONE:
-				BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+				VR_BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 				break;
 
 			case SSL_ERROR_WANT_WRITE:
-				BIO_set_flags(bio, BIO_FLAGS_WRITE | BIO_FLAGS_SHOULD_RETRY);
+				VR_BIO_set_flags(bio, BIO_FLAGS_WRITE | BIO_FLAGS_SHOULD_RETRY);
 				break;
 
 			case SSL_ERROR_WANT_READ:
-				BIO_set_flags(bio, BIO_FLAGS_READ | BIO_FLAGS_SHOULD_RETRY);
+				VR_BIO_set_flags(bio, BIO_FLAGS_READ | BIO_FLAGS_SHOULD_RETRY);
 				break;
 
 			case SSL_ERROR_WANT_X509_LOOKUP:
-				BIO_set_flags(bio, BIO_FLAGS_IO_SPECIAL);
-				BIO_set_retry_reason(bio, BIO_RR_SSL_X509_LOOKUP);
+				VR_BIO_set_flags(bio, BIO_FLAGS_IO_SPECIAL);
+				VR_BIO_set_retry_reason(bio, BIO_RR_SSL_X509_LOOKUP);
 				break;
 
 			case SSL_ERROR_WANT_CONNECT:
-				BIO_set_flags(bio, BIO_FLAGS_IO_SPECIAL);
-				BIO_set_retry_reason(bio, BIO_RR_CONNECT);
+				VR_BIO_set_flags(bio, BIO_FLAGS_IO_SPECIAL);
+				VR_BIO_set_retry_reason(bio, BIO_RR_CONNECT);
 				break;
 
 			case SSL_ERROR_SYSCALL:
-				BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+				VR_BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 				break;
 
 			case SSL_ERROR_SSL:
-				BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+				VR_BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 				break;
 		}
 	}
@@ -144,15 +144,15 @@ static int bio_rdp_tls_read(BIO* bio, char* buf, int size)
 {
 	int error;
 	int status;
-	BIO_RDP_TLS* tls = (BIO_RDP_TLS*) BIO_get_data(bio);
+	BIO_RDP_TLS* tls = (BIO_RDP_TLS*) VR_BIO_get_data(bio);
 
 	if (!buf || !tls)
 		return 0;
 
-	BIO_clear_flags(bio, BIO_FLAGS_WRITE | BIO_FLAGS_READ | BIO_FLAGS_IO_SPECIAL);
+	VR_BIO_clear_flags(bio, BIO_FLAGS_WRITE | BIO_FLAGS_READ | BIO_FLAGS_IO_SPECIAL);
 	EnterCriticalSection(&tls->lock);
-	status = SSL_read(tls->ssl, buf, size);
-	error = SSL_get_error(tls->ssl, status);
+	status = VR_SSL_read(tls->ssl, buf, size);
+	error = VR_SSL_get_error(tls->ssl, status);
 	LeaveCriticalSection(&tls->lock);
 
 	if (status <= 0)
@@ -160,42 +160,42 @@ static int bio_rdp_tls_read(BIO* bio, char* buf, int size)
 		switch (error)
 		{
 			case SSL_ERROR_NONE:
-				BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+				VR_BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 				break;
 
 			case SSL_ERROR_WANT_READ:
-				BIO_set_flags(bio, BIO_FLAGS_READ | BIO_FLAGS_SHOULD_RETRY);
+				VR_BIO_set_flags(bio, BIO_FLAGS_READ | BIO_FLAGS_SHOULD_RETRY);
 				break;
 
 			case SSL_ERROR_WANT_WRITE:
-				BIO_set_flags(bio, BIO_FLAGS_WRITE | BIO_FLAGS_SHOULD_RETRY);
+				VR_BIO_set_flags(bio, BIO_FLAGS_WRITE | BIO_FLAGS_SHOULD_RETRY);
 				break;
 
 			case SSL_ERROR_WANT_X509_LOOKUP:
-				BIO_set_flags(bio, BIO_FLAGS_IO_SPECIAL);
-				BIO_set_retry_reason(bio, BIO_RR_SSL_X509_LOOKUP);
+				VR_BIO_set_flags(bio, BIO_FLAGS_IO_SPECIAL);
+				VR_BIO_set_retry_reason(bio, BIO_RR_SSL_X509_LOOKUP);
 				break;
 
 			case SSL_ERROR_WANT_ACCEPT:
-				BIO_set_flags(bio, BIO_FLAGS_IO_SPECIAL);
-				BIO_set_retry_reason(bio, BIO_RR_ACCEPT);
+				VR_BIO_set_flags(bio, BIO_FLAGS_IO_SPECIAL);
+				VR_BIO_set_retry_reason(bio, BIO_RR_ACCEPT);
 				break;
 
 			case SSL_ERROR_WANT_CONNECT:
-				BIO_set_flags(bio, BIO_FLAGS_IO_SPECIAL);
-				BIO_set_retry_reason(bio, BIO_RR_CONNECT);
+				VR_BIO_set_flags(bio, BIO_FLAGS_IO_SPECIAL);
+				VR_BIO_set_retry_reason(bio, BIO_RR_CONNECT);
 				break;
 
 			case SSL_ERROR_SSL:
-				BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+				VR_BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 				break;
 
 			case SSL_ERROR_ZERO_RETURN:
-				BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+				VR_BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 				break;
 
 			case SSL_ERROR_SYSCALL:
-				BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+				VR_BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 				break;
 		}
 	}
@@ -220,7 +220,7 @@ static int bio_rdp_tls_puts(BIO* bio, const char* str)
 		return 0;
 
 	size = strlen(str);
-	status = BIO_write(bio, str, size);
+	status = VR_BIO_write(bio, str, size);
 	return status;
 }
 
@@ -235,7 +235,7 @@ static long bio_rdp_tls_ctrl(BIO* bio, int cmd, long num, void* ptr)
 	BIO* ssl_wbio;
 	BIO* next_bio;
 	int status = -1;
-	BIO_RDP_TLS* tls = (BIO_RDP_TLS*) BIO_get_data(bio);
+	BIO_RDP_TLS* tls = (BIO_RDP_TLS*) VR_BIO_get_data(bio);
 
 	if (!tls)
 		return 0;
@@ -243,33 +243,33 @@ static long bio_rdp_tls_ctrl(BIO* bio, int cmd, long num, void* ptr)
 	if (!tls->ssl && (cmd != BIO_C_SET_SSL))
 		return 0;
 
-	next_bio = BIO_next(bio);
-	ssl_rbio = tls->ssl ? SSL_get_rbio(tls->ssl) : NULL;
-	ssl_wbio = tls->ssl ? SSL_get_wbio(tls->ssl) : NULL;
+	next_bio = VR_BIO_next(bio);
+	ssl_rbio = tls->ssl ? VR_SSL_get_rbio(tls->ssl) : NULL;
+	ssl_wbio = tls->ssl ? VR_SSL_get_wbio(tls->ssl) : NULL;
 
 	switch (cmd)
 	{
 		case BIO_CTRL_RESET:
-			SSL_shutdown(tls->ssl);
+			VR_SSL_shutdown(tls->ssl);
 
-			if (SSL_in_connect_init(tls->ssl))
-				SSL_set_connect_state(tls->ssl);
-			else if (SSL_in_accept_init(tls->ssl))
-				SSL_set_accept_state(tls->ssl);
+			if (VR_SSL_in_connect_init(tls->ssl))
+				VR_SSL_set_connect_state(tls->ssl);
+			else if (VR_SSL_in_accept_init(tls->ssl))
+				VR_SSL_set_accept_state(tls->ssl);
 
-			SSL_clear(tls->ssl);
+			VR_SSL_clear(tls->ssl);
 
 			if (next_bio)
-				status = BIO_ctrl(next_bio, cmd, num, ptr);
+				status = VR_BIO_ctrl(next_bio, cmd, num, ptr);
 			else if (ssl_rbio)
-				status = BIO_ctrl(ssl_rbio, cmd, num, ptr);
+				status = VR_BIO_ctrl(ssl_rbio, cmd, num, ptr);
 			else
 				status = 1;
 
 			break;
 
 		case BIO_C_GET_FD:
-			status = BIO_ctrl(ssl_rbio, cmd, num, ptr);
+			status = VR_BIO_ctrl(ssl_rbio, cmd, num, ptr);
 			break;
 
 		case BIO_CTRL_INFO:
@@ -281,44 +281,44 @@ static long bio_rdp_tls_ctrl(BIO* bio, int cmd, long num, void* ptr)
 			break;
 
 		case BIO_CTRL_GET_CALLBACK:
-			*((ULONG_PTR*) ptr) = (ULONG_PTR) SSL_get_info_callback(tls->ssl);
+			*((ULONG_PTR*) ptr) = (ULONG_PTR) VR_SSL_get_info_callback(tls->ssl);
 			status = 1;
 			break;
 
 		case BIO_C_SSL_MODE:
 			if (num)
-				SSL_set_connect_state(tls->ssl);
+				VR_SSL_set_connect_state(tls->ssl);
 			else
-				SSL_set_accept_state(tls->ssl);
+				VR_SSL_set_accept_state(tls->ssl);
 
 			status = 1;
 			break;
 
 		case BIO_CTRL_GET_CLOSE:
-			status = BIO_get_shutdown(bio);
+			status = VR_BIO_get_shutdown(bio);
 			break;
 
 		case BIO_CTRL_SET_CLOSE:
-			BIO_set_shutdown(bio, (int) num);
+			VR_BIO_set_shutdown(bio, (int) num);
 			status = 1;
 			break;
 
 		case BIO_CTRL_WPENDING:
-			status = BIO_ctrl(ssl_wbio, cmd, num, ptr);
+			status = VR_BIO_ctrl(ssl_wbio, cmd, num, ptr);
 			break;
 
 		case BIO_CTRL_PENDING:
-			status = SSL_pending(tls->ssl);
+			status = VR_SSL_pending(tls->ssl);
 
 			if (status == 0)
-				status = BIO_pending(ssl_rbio);
+				status = VR_BIO_pending(ssl_rbio);
 
 			break;
 
 		case BIO_CTRL_FLUSH:
-			BIO_clear_retry_flags(bio);
-			status = BIO_ctrl(ssl_wbio, cmd, num, ptr);
-			BIO_copy_next_retry(bio);
+			VR_BIO_clear_retry_flags(bio);
+			status = VR_BIO_ctrl(ssl_wbio, cmd, num, ptr);
+			VR_BIO_copy_next_retry(bio);
 			status = 1;
 			break;
 
@@ -326,15 +326,15 @@ static long bio_rdp_tls_ctrl(BIO* bio, int cmd, long num, void* ptr)
 			if (next_bio && (next_bio != ssl_rbio))
 			{
 #if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
-				SSL_set_bio(tls->ssl, next_bio, next_bio);
+				VR_SSL_set_bio(tls->ssl, next_bio, next_bio);
 				CRYPTO_add(&(bio->next_bio->references), 1, CRYPTO_LOCK_BIO);
 #else
 				/*
 				 * We are going to pass ownership of next to the SSL object...but
 				 * we don't own a reference to pass yet - so up ref
 				 */
-				BIO_up_ref(next_bio);
-				SSL_set_bio(tls->ssl, next_bio, next_bio);
+				VR_BIO_up_ref(next_bio);
+				VR_SSL_set_bio(tls->ssl, next_bio, next_bio);
 #endif
 			}
 
@@ -347,7 +347,7 @@ static long bio_rdp_tls_ctrl(BIO* bio, int cmd, long num, void* ptr)
 			if (bio == ptr)
 			{
 				if (ssl_rbio != ssl_wbio)
-					BIO_free_all(ssl_wbio);
+					VR_BIO_free_all(ssl_wbio);
 
 #if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 
@@ -357,7 +357,7 @@ static long bio_rdp_tls_ctrl(BIO* bio, int cmd, long num, void* ptr)
 				tls->ssl->wbio = tls->ssl->rbio = NULL;
 #else
 				/* OpenSSL 1.1: This will also clear the reference we obtained during push */
-				SSL_set_bio(tls->ssl, NULL, NULL);
+				VR_SSL_set_bio(tls->ssl, NULL, NULL);
 #endif
 			}
 
@@ -374,56 +374,56 @@ static long bio_rdp_tls_ctrl(BIO* bio, int cmd, long num, void* ptr)
 			break;
 
 		case BIO_C_SET_SSL:
-			BIO_set_shutdown(bio, (int) num);
+			VR_BIO_set_shutdown(bio, (int) num);
 
 			if (ptr)
 			{
 				tls->ssl = (SSL*) ptr;
-				ssl_rbio = SSL_get_rbio(tls->ssl);
-				ssl_wbio = SSL_get_wbio(tls->ssl);
+				ssl_rbio = VR_SSL_get_rbio(tls->ssl);
+				ssl_wbio = VR_SSL_get_wbio(tls->ssl);
 			}
 
 			if (ssl_rbio)
 			{
 				if (next_bio)
-					BIO_push(ssl_rbio, next_bio);
+					VR_BIO_push(ssl_rbio, next_bio);
 
-				BIO_set_next(bio, ssl_rbio);
+				VR_BIO_set_next(bio, ssl_rbio);
 #if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 				CRYPTO_add(&(ssl_rbio->references), 1, CRYPTO_LOCK_BIO);
 #else
-				BIO_up_ref(ssl_rbio);
+				VR_BIO_up_ref(ssl_rbio);
 #endif
 			}
 
-			BIO_set_init(bio, 1);
+			VR_BIO_set_init(bio, 1);
 			status = 1;
 			break;
 
 		case BIO_C_DO_STATE_MACHINE:
-			BIO_clear_flags(bio, BIO_FLAGS_READ | BIO_FLAGS_WRITE | BIO_FLAGS_IO_SPECIAL);
-			BIO_set_retry_reason(bio, 0);
-			status = SSL_do_handshake(tls->ssl);
+			VR_BIO_clear_flags(bio, BIO_FLAGS_READ | BIO_FLAGS_WRITE | BIO_FLAGS_IO_SPECIAL);
+			VR_BIO_set_retry_reason(bio, 0);
+			status = VR_SSL_do_handshake(tls->ssl);
 
 			if (status <= 0)
 			{
-				switch (SSL_get_error(tls->ssl, status))
+				switch (VR_SSL_get_error(tls->ssl, status))
 				{
 					case SSL_ERROR_WANT_READ:
-						BIO_set_flags(bio, BIO_FLAGS_READ | BIO_FLAGS_SHOULD_RETRY);
+						VR_BIO_set_flags(bio, BIO_FLAGS_READ | BIO_FLAGS_SHOULD_RETRY);
 						break;
 
 					case SSL_ERROR_WANT_WRITE:
-						BIO_set_flags(bio, BIO_FLAGS_WRITE | BIO_FLAGS_SHOULD_RETRY);
+						VR_BIO_set_flags(bio, BIO_FLAGS_WRITE | BIO_FLAGS_SHOULD_RETRY);
 						break;
 
 					case SSL_ERROR_WANT_CONNECT:
-						BIO_set_flags(bio, BIO_FLAGS_IO_SPECIAL | BIO_FLAGS_SHOULD_RETRY);
-						BIO_set_retry_reason(bio, BIO_get_retry_reason(next_bio));
+						VR_BIO_set_flags(bio, BIO_FLAGS_IO_SPECIAL | BIO_FLAGS_SHOULD_RETRY);
+						VR_BIO_set_retry_reason(bio, VR_BIO_get_retry_reason(next_bio));
 						break;
 
 					default:
-						BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+						VR_BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 						break;
 				}
 			}
@@ -431,7 +431,7 @@ static long bio_rdp_tls_ctrl(BIO* bio, int cmd, long num, void* ptr)
 			break;
 
 		default:
-			status = BIO_ctrl(ssl_rbio, cmd, num, ptr);
+			status = VR_BIO_ctrl(ssl_rbio, cmd, num, ptr);
 			break;
 	}
 
@@ -441,13 +441,13 @@ static long bio_rdp_tls_ctrl(BIO* bio, int cmd, long num, void* ptr)
 static int bio_rdp_tls_new(BIO* bio)
 {
 	BIO_RDP_TLS* tls;
-	BIO_set_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+	VR_BIO_set_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 
 	if (!(tls = calloc(1, sizeof(BIO_RDP_TLS))))
 		return 0;
 
 	InitializeCriticalSectionAndSpinCount(&tls->lock, 4000);
-	BIO_set_data(bio, (void*) tls);
+	VR_BIO_set_data(bio, (void*) tls);
 	return 1;
 }
 
@@ -458,21 +458,21 @@ static int bio_rdp_tls_free(BIO* bio)
 	if (!bio)
 		return 0;
 
-	tls = (BIO_RDP_TLS*) BIO_get_data(bio);
+	tls = (BIO_RDP_TLS*) VR_BIO_get_data(bio);
 
 	if (!tls)
 		return 0;
 
-	if (BIO_get_shutdown(bio))
+	if (VR_BIO_get_shutdown(bio))
 	{
-		if (BIO_get_init(bio) && tls->ssl)
+		if (VR_BIO_get_init(bio) && tls->ssl)
 		{
-			SSL_shutdown(tls->ssl);
-			SSL_free(tls->ssl);
+			VR_SSL_shutdown(tls->ssl);
+			VR_SSL_free(tls->ssl);
 		}
 
-		BIO_set_init(bio, 0);
-		BIO_set_flags(bio, 0);
+		VR_BIO_set_init(bio, 0);
+		VR_BIO_set_flags(bio, 0);
 	}
 
 	DeleteCriticalSection(&tls->lock);
@@ -488,7 +488,7 @@ static long bio_rdp_tls_callback_ctrl(BIO* bio, int cmd, bio_info_cb* fp)
 	if (!bio)
 		return 0;
 
-	tls = (BIO_RDP_TLS*) BIO_get_data(bio);
+	tls = (BIO_RDP_TLS*) VR_BIO_get_data(bio);
 
 	if (!tls)
 		return 0;
@@ -496,12 +496,12 @@ static long bio_rdp_tls_callback_ctrl(BIO* bio, int cmd, bio_info_cb* fp)
 	switch (cmd)
 	{
 		case BIO_CTRL_SET_CALLBACK:
-			SSL_set_info_callback(tls->ssl, (void (*)(const SSL*, int, int)) fp);
+			VR_SSL_set_info_callback(tls->ssl, (void (*)(const SSL*, int, int)) fp);
 			status = 1;
 			break;
 
 		default:
-			status = BIO_callback_ctrl(SSL_get_rbio(tls->ssl), cmd, fp);
+			status = VR_BIO_callback_ctrl(VR_SSL_get_rbio(tls->ssl), cmd, fp);
 			break;
 	}
 
@@ -516,17 +516,17 @@ static BIO_METHOD* BIO_s_rdp_tls(void)
 
 	if (bio_methods == NULL)
 	{
-		if (!(bio_methods = BIO_meth_new(BIO_TYPE_RDP_TLS, "RdpTls")))
+		if (!(bio_methods = VR_BIO_meth_new(BIO_TYPE_RDP_TLS, "RdpTls")))
 			return NULL;
 
-		BIO_meth_set_write(bio_methods, bio_rdp_tls_write);
-		BIO_meth_set_read(bio_methods, bio_rdp_tls_read);
-		BIO_meth_set_puts(bio_methods, bio_rdp_tls_puts);
-		BIO_meth_set_gets(bio_methods, bio_rdp_tls_gets);
-		BIO_meth_set_ctrl(bio_methods, bio_rdp_tls_ctrl);
-		BIO_meth_set_create(bio_methods, bio_rdp_tls_new);
-		BIO_meth_set_destroy(bio_methods, bio_rdp_tls_free);
-		BIO_meth_set_callback_ctrl(bio_methods, bio_rdp_tls_callback_ctrl);
+		VR_BIO_meth_set_write(bio_methods, bio_rdp_tls_write);
+		VR_BIO_meth_set_read(bio_methods, bio_rdp_tls_read);
+		VR_BIO_meth_set_puts(bio_methods, bio_rdp_tls_puts);
+		VR_BIO_meth_set_gets(bio_methods, bio_rdp_tls_gets);
+		VR_BIO_meth_set_ctrl(bio_methods, bio_rdp_tls_ctrl);
+		VR_BIO_meth_set_create(bio_methods, bio_rdp_tls_new);
+		VR_BIO_meth_set_destroy(bio_methods, bio_rdp_tls_free);
+		VR_BIO_meth_set_callback_ctrl(bio_methods, bio_rdp_tls_callback_ctrl);
 	}
 
 	return bio_methods;
@@ -536,25 +536,25 @@ static BIO* BIO_new_rdp_tls(SSL_CTX* ctx, int client)
 {
 	BIO* bio;
 	SSL* ssl;
-	bio = BIO_new(BIO_s_rdp_tls());
+	bio = VR_BIO_new(BIO_s_rdp_tls());
 
 	if (!bio)
 		return NULL;
 
-	ssl = SSL_new(ctx);
+	ssl = VR_SSL_new(ctx);
 
 	if (!ssl)
 	{
-		BIO_free_all(bio);
+		VR_BIO_free_all(bio);
 		return NULL;
 	}
 
 	if (client)
-		SSL_set_connect_state(ssl);
+		VR_SSL_set_connect_state(ssl);
 	else
-		SSL_set_accept_state(ssl);
+		VR_SSL_set_accept_state(ssl);
 
-	BIO_set_ssl(bio, ssl, BIO_CLOSE);
+	VR_BIO_set_ssl(bio, ssl, BIO_CLOSE);
 	return bio;
 }
 
@@ -565,9 +565,9 @@ static CryptoCert tls_get_certificate(rdpTls* tls, BOOL peer)
 	STACK_OF(X509) *chain;
 
 	if (peer)
-		remote_cert = SSL_get_peer_certificate(tls->ssl);
+		remote_cert = VR_SSL_get_peer_certificate(tls->ssl);
 	else
-		remote_cert = X509_dup(SSL_get_certificate(tls->ssl));
+		remote_cert = VR_X509_dup(VR_SSL_get_certificate(tls->ssl));
 
 	if (!remote_cert)
 	{
@@ -579,20 +579,20 @@ static CryptoCert tls_get_certificate(rdpTls* tls, BOOL peer)
 
 	if (!cert)
 	{
-		X509_free(remote_cert);
+		VR_X509_free(remote_cert);
 		return NULL;
 	}
 
 	cert->px509 = remote_cert;
 	/* Get the peer's chain. If it does not exist, we're setting NULL (clean data either way) */
-	chain = SSL_get_peer_cert_chain(tls->ssl);
+	chain = VR_SSL_get_peer_cert_chain(tls->ssl);
 	cert->px509chain = chain;
 	return cert;
 }
 
 static void tls_free_certificate(CryptoCert cert)
 {
-	X509_free(cert->px509);
+	VR_X509_free(cert->px509);
 	free(cert);
 }
 
@@ -607,7 +607,7 @@ static SecPkgContext_Bindings* tls_get_channel_bindings(X509* cert)
 	SecPkgContext_Bindings* ContextBindings;
 	const size_t PrefixLength = strnlen(TLS_SERVER_END_POINT, ARRAYSIZE(TLS_SERVER_END_POINT));
 	BYTE CertificateHash[32] = { 0 };
-	X509_digest(cert, EVP_sha256(), CertificateHash, &CertificateHashLength);
+	VR_X509_digest(cert, VR_EVP_sha256(), CertificateHash, &CertificateHashLength);
 	ChannelBindingTokenLength = PrefixLength + CertificateHashLength;
 	ContextBindings = (SecPkgContext_Bindings*) calloc(1,
 	                  sizeof(SecPkgContext_Bindings));
@@ -645,7 +645,7 @@ static BOOL tls_prepare(rdpTls* tls, BIO* underlying, SSL_METHOD* method,
 #endif
 {
 	rdpSettings* settings = tls->settings;
-	tls->ctx = SSL_CTX_new(method);
+	tls->ctx = VR_SSL_CTX_new(method);
 
 	if (!tls->ctx)
 	{
@@ -653,21 +653,21 @@ static BOOL tls_prepare(rdpTls* tls, BIO* underlying, SSL_METHOD* method,
 		return FALSE;
 	}
 
-	SSL_CTX_set_mode(tls->ctx,
+	VR_SSL_CTX_set_mode(tls->ctx,
 	                 SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER | SSL_MODE_ENABLE_PARTIAL_WRITE);
-	SSL_CTX_set_options(tls->ctx, options);
-	SSL_CTX_set_read_ahead(tls->ctx, 1);
+	VR_SSL_CTX_set_options(tls->ctx, options);
+	VR_SSL_CTX_set_read_ahead(tls->ctx, 1);
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
-	SSL_CTX_set_min_proto_version(tls->ctx, TLS1_VERSION); /* min version */
-	SSL_CTX_set_max_proto_version(tls->ctx, 0); /* highest supported version by library */
+	VR_SSL_CTX_set_min_proto_version(tls->ctx, TLS1_VERSION); /* min version */
+	VR_SSL_CTX_set_max_proto_version(tls->ctx, 0); /* highest supported version by library */
 #endif
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L && !defined(LIBRESSL_VERSION_NUMBER)
-	SSL_CTX_set_security_level(tls->ctx, settings->TlsSecLevel);
+	VR_SSL_CTX_set_security_level(tls->ctx, settings->TlsSecLevel);
 #endif
 
 	if (settings->AllowedTlsCiphers)
 	{
-		if (!SSL_CTX_set_cipher_list(tls->ctx, settings->AllowedTlsCiphers))
+		if (!VR_SSL_CTX_set_cipher_list(tls->ctx, settings->AllowedTlsCiphers))
 		{
 			WLog_ERR(TAG, "SSL_CTX_set_cipher_list %s failed", settings->AllowedTlsCiphers);
 			return FALSE;
@@ -676,13 +676,13 @@ static BOOL tls_prepare(rdpTls* tls, BIO* underlying, SSL_METHOD* method,
 
 	tls->bio = BIO_new_rdp_tls(tls->ctx, clientMode);
 
-	if (BIO_get_ssl(tls->bio, &tls->ssl) < 0)
+	if (VR_BIO_get_ssl(tls->bio, &tls->ssl) < 0)
 	{
 		WLog_ERR(TAG, "unable to retrieve the SSL of the connection");
 		return FALSE;
 	}
 
-	BIO_push(tls->bio, underlying);
+	VR_BIO_push(tls->bio, underlying);
 	tls->underlying = underlying;
 	return TRUE;
 }
@@ -707,18 +707,18 @@ static int tls_do_handshake(rdpTls* tls, BOOL clientMode)
 		HANDLE event;
 		DWORD status;
 #endif
-		status = BIO_do_handshake(tls->bio);
+		status = VR_BIO_do_handshake(tls->bio);
 
 		if (status == 1)
 			break;
 
-		if (!BIO_should_retry(tls->bio))
+		if (!VR_BIO_should_retry(tls->bio))
 			return -1;
 
 #ifndef _WIN32
 		/* we select() only for read even if we should test both read and write
 		 * depending of what have blocked */
-		fd = BIO_get_fd(tls->bio, NULL);
+		fd = VR_BIO_get_fd(tls->bio, NULL);
 
 		if (fd < 0)
 		{
@@ -727,7 +727,7 @@ static int tls_do_handshake(rdpTls* tls, BOOL clientMode)
 		}
 
 #else
-		BIO_get_event(tls->bio, &event);
+		VR_BIO_get_event(tls->bio, &event);
 
 		if (!event)
 		{
@@ -859,12 +859,12 @@ int tls_connect(rdpTls* tls, BIO* underlying)
 
 	if (!tls_prepare(tls, underlying, SSLv23_client_method(), options, TRUE))
 #else
-	if (!tls_prepare(tls, underlying, TLS_client_method(), options, TRUE))
+	if (!tls_prepare(tls, underlying, VR_TLS_client_method(), options, TRUE))
 #endif
 		return FALSE;
 
 #if !defined(OPENSSL_NO_TLSEXT) && !defined(LIBRESSL_VERSION_NUMBER)
-	SSL_set_tlsext_host_name(tls->ssl, tls->hostname);
+	VR_SSL_set_tlsext_host_name(tls->ssl, tls->hostname);
 #endif
 	return tls_do_handshake(tls, TRUE);
 }
@@ -926,7 +926,7 @@ BOOL tls_accept(rdpTls* tls, BIO* underlying, rdpSettings* settings)
 
 	if (settings->PrivateKeyFile)
 	{
-		bio = BIO_new_file(settings->PrivateKeyFile, "rb");
+		bio = VR_BIO_new_file(settings->PrivateKeyFile, "rb");
 
 		if (!bio)
 		{
@@ -937,7 +937,7 @@ BOOL tls_accept(rdpTls* tls, BIO* underlying, rdpSettings* settings)
 	}
 	else if (settings->PrivateKeyContent)
 	{
-		bio = BIO_new_mem_buf(settings->PrivateKeyContent,
+		bio = VR_BIO_new_mem_buf(settings->PrivateKeyContent,
 		                      strlen(settings->PrivateKeyContent));
 
 		if (!bio)
@@ -952,8 +952,8 @@ BOOL tls_accept(rdpTls* tls, BIO* underlying, rdpSettings* settings)
 		return FALSE;
 	}
 
-	rsa = PEM_read_bio_RSAPrivateKey(bio, NULL, NULL, NULL);
-	BIO_free_all(bio);
+	rsa = VR_PEM_read_bio_RSAPrivateKey(bio, NULL, NULL, NULL);
+	VR_BIO_free_all(bio);
 
 	if (!rsa)
 	{
@@ -961,16 +961,16 @@ BOOL tls_accept(rdpTls* tls, BIO* underlying, rdpSettings* settings)
 		return FALSE;
 	}
 
-	if (SSL_use_RSAPrivateKey(tls->ssl, rsa) <= 0)
+	if (VR_SSL_use_RSAPrivateKey(tls->ssl, rsa) <= 0)
 	{
 		WLog_ERR(TAG, "SSL_CTX_use_RSAPrivateKey_file failed");
-		RSA_free(rsa);
+		VR_RSA_free(rsa);
 		return FALSE;
 	}
 
 	if (settings->CertificateFile)
 	{
-		bio = BIO_new_file(settings->CertificateFile, "rb");
+		bio = VR_BIO_new_file(settings->CertificateFile, "rb");
 
 		if (!bio)
 		{
@@ -981,7 +981,7 @@ BOOL tls_accept(rdpTls* tls, BIO* underlying, rdpSettings* settings)
 	}
 	else if (settings->CertificateContent)
 	{
-		bio = BIO_new_mem_buf(settings->CertificateContent,
+		bio = VR_BIO_new_mem_buf(settings->CertificateContent,
 		                      strlen(settings->CertificateContent));
 
 		if (!bio)
@@ -996,8 +996,8 @@ BOOL tls_accept(rdpTls* tls, BIO* underlying, rdpSettings* settings)
 		return FALSE;
 	}
 
-	x509 = PEM_read_bio_X509(bio, NULL, NULL, 0);
-	BIO_free_all(bio);
+	x509 = VR_PEM_read_bio_X509(bio, NULL, NULL, 0);
+	VR_BIO_free_all(bio);
 
 	if (!x509)
 	{
@@ -1005,15 +1005,15 @@ BOOL tls_accept(rdpTls* tls, BIO* underlying, rdpSettings* settings)
 		return FALSE;
 	}
 
-	if (SSL_use_certificate(tls->ssl, x509) <= 0)
+	if (VR_SSL_use_certificate(tls->ssl, x509) <= 0)
 	{
 		WLog_ERR(TAG, "SSL_use_certificate_file failed");
-		X509_free(x509);
+		VR_X509_free(x509);
 		return FALSE;
 	}
 
 #if defined(MICROSOFT_IOS_SNI_BUG) && !defined(OPENSSL_NO_TLSEXT) && !defined(LIBRESSL_VERSION_NUMBER)
-	SSL_set_tlsext_debug_callback(tls->ssl, tls_openssl_tlsext_debug_callback);
+	VR_SSL_set_tlsext_debug_callback(tls->ssl, tls_openssl_tlsext_debug_callback);
 #endif
 	return tls_do_handshake(tls, FALSE) > 0;
 }
@@ -1044,12 +1044,12 @@ BOOL tls_send_alert(rdpTls* tls)
 		 * Manually sending a TLS alert is necessary in certain cases,
 		 * like when server-side NLA results in an authentication failure.
 		 */
-		SSL_SESSION* ssl_session = SSL_get_session(tls->ssl);
-		SSL_CTX* ssl_ctx = SSL_get_SSL_CTX(tls->ssl);
-		SSL_set_quiet_shutdown(tls->ssl, 1);
+		SSL_SESSION* ssl_session = VR_SSL_get_session(tls->ssl);
+		SSL_CTX* ssl_ctx = VR_SSL_get_SSL_CTX(tls->ssl);
+		VR_SSL_set_quiet_shutdown(tls->ssl, 1);
 
 		if ((tls->alertLevel == TLS_ALERT_LEVEL_FATAL) && (ssl_session))
-			SSL_CTX_remove_session(ssl_ctx, ssl_session);
+			VR_SSL_CTX_remove_session(ssl_ctx, ssl_session);
 
 		tls->ssl->s3->alert_dispatch = 1;
 		tls->ssl->s3->send_alert[0] = tls->alertLevel;
@@ -1070,7 +1070,7 @@ int tls_write_all(rdpTls* tls, const BYTE* data, int length)
 
 	while (offset < length)
 	{
-		status = BIO_write(bio, &data[offset], length - offset);
+		status = VR_BIO_write(bio, &data[offset], length - offset);
 
 		if (status > 0)
 		{
@@ -1078,7 +1078,7 @@ int tls_write_all(rdpTls* tls, const BYTE* data, int length)
 		}
 		else
 		{
-			if (!BIO_should_retry(bio))
+			if (!VR_BIO_should_retry(bio))
 				return -1;
 
 			if (BIO_write_blocked(bio))
@@ -1233,7 +1233,7 @@ static BOOL tls_extract_pem(CryptoCert cert, BYTE** PublicKey, DWORD* PublicKeyL
 	/**
 	 * Don't manage certificates internally, leave it up entirely to the external client implementation
 	 */
-	bio = BIO_new(BIO_s_mem());
+	bio = VR_BIO_new(VR_BIO_s_mem());
 
 	if (!bio)
 	{
@@ -1241,7 +1241,7 @@ static BOOL tls_extract_pem(CryptoCert cert, BYTE** PublicKey, DWORD* PublicKeyL
 		return FALSE;
 	}
 
-	status = PEM_write_bio_X509(bio, cert->px509);
+	status = VR_PEM_write_bio_X509(bio, cert->px509);
 
 	if (status < 0)
 	{
@@ -1259,7 +1259,7 @@ static BOOL tls_extract_pem(CryptoCert cert, BYTE** PublicKey, DWORD* PublicKeyL
 		goto fail;
 	}
 
-	status = BIO_read(bio, pemCert, length);
+	status = VR_BIO_read(bio, pemCert, length);
 
 	if (status < 0)
 	{
@@ -1281,7 +1281,7 @@ static BOOL tls_extract_pem(CryptoCert cert, BYTE** PublicKey, DWORD* PublicKeyL
 
 		length = new_len;
 		pemCert = new_cert;
-		status = BIO_read(bio, &pemCert[offset], length - offset);
+		status = VR_BIO_read(bio, &pemCert[offset], length - offset);
 
 		if (status < 0)
 			break;
@@ -1305,7 +1305,7 @@ fail:
 	if (!rc)
 		free(pemCert);
 
-	BIO_free_all(bio);
+	VR_BIO_free_all(bio);
 	return rc;
 }
 
@@ -1670,13 +1670,13 @@ void tls_free(rdpTls* tls)
 
 	if (tls->ctx)
 	{
-		SSL_CTX_free(tls->ctx);
+		VR_SSL_CTX_free(tls->ctx);
 		tls->ctx = NULL;
 	}
 
 	/* tls->underlying is a stacked BIO under tls->bio.
 	 * BIO_free_all will free recursivly. */
-	BIO_free_all(tls->bio);
+	VR_BIO_free_all(tls->bio);
 	tls->bio = NULL;
 	tls->underlying = NULL;
 

@@ -1840,12 +1840,12 @@ BOOL tsg_connect(rdpTsg* tsg, const char* hostname, UINT16 port, int timeout)
 	}
 
 	WLog_INFO(TAG, "TS Gateway Connection Success");
-	tsg->bio = BIO_new(BIO_s_tsg());
+	tsg->bio = VR_BIO_new(BIO_s_tsg());
 
 	if (!tsg->bio)
 		return FALSE;
 
-	BIO_set_data(tsg->bio, (void*) tsg);
+	VR_BIO_set_data(tsg->bio, (void*) tsg);
 	return TRUE;
 }
 
@@ -2000,23 +2000,23 @@ void tsg_free(rdpTsg* tsg)
 static int transport_bio_tsg_write(BIO* bio, const char* buf, int num)
 {
 	int status;
-	rdpTsg* tsg = (rdpTsg*) BIO_get_data(bio);
-	BIO_clear_flags(bio, BIO_FLAGS_WRITE);
+	rdpTsg* tsg = (rdpTsg*) VR_BIO_get_data(bio);
+	VR_BIO_clear_flags(bio, BIO_FLAGS_WRITE);
 	status = tsg_write(tsg, (BYTE*) buf, num);
 
 	if (status < 0)
 	{
-		BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+		VR_BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 		return -1;
 	}
 	else if (status == 0)
 	{
-		BIO_set_flags(bio, BIO_FLAGS_WRITE);
+		VR_BIO_set_flags(bio, BIO_FLAGS_WRITE);
 		WSASetLastError(WSAEWOULDBLOCK);
 	}
 	else
 	{
-		BIO_set_flags(bio, BIO_FLAGS_WRITE);
+		VR_BIO_set_flags(bio, BIO_FLAGS_WRITE);
 	}
 
 	return status >= 0 ? status : -1;
@@ -2025,30 +2025,30 @@ static int transport_bio_tsg_write(BIO* bio, const char* buf, int num)
 static int transport_bio_tsg_read(BIO* bio, char* buf, int size)
 {
 	int status;
-	rdpTsg* tsg = (rdpTsg*) BIO_get_data(bio);
+	rdpTsg* tsg = (rdpTsg*) VR_BIO_get_data(bio);
 
 	if (!tsg || (size < 0))
 	{
-		BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+		VR_BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 		return -1;
 	}
 
-	BIO_clear_flags(bio, BIO_FLAGS_READ);
+	VR_BIO_clear_flags(bio, BIO_FLAGS_READ);
 	status = tsg_read(tsg, (BYTE*) buf, size);
 
 	if (status < 0)
 	{
-		BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+		VR_BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 		return -1;
 	}
 	else if (status == 0)
 	{
-		BIO_set_flags(bio, BIO_FLAGS_READ);
+		VR_BIO_set_flags(bio, BIO_FLAGS_READ);
 		WSASetLastError(WSAEWOULDBLOCK);
 	}
 	else
 	{
-		BIO_set_flags(bio, BIO_FLAGS_READ);
+		VR_BIO_set_flags(bio, BIO_FLAGS_READ);
 	}
 
 	return status > 0 ? status : -1;
@@ -2067,7 +2067,7 @@ static int transport_bio_tsg_gets(BIO* bio, char* str, int size)
 static long transport_bio_tsg_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 {
 	int status = -1;
-	rdpTsg* tsg = (rdpTsg*) BIO_get_data(bio);
+	rdpTsg* tsg = (rdpTsg*) VR_BIO_get_data(bio);
 	RpcVirtualConnection* connection = tsg->rpc->VirtualConnection;
 	RpcInChannel* inChannel = connection->DefaultInChannel;
 	RpcOutChannel* outChannel = connection->DefaultOutChannel;
@@ -2075,8 +2075,8 @@ static long transport_bio_tsg_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 	switch (cmd)
 	{
 		case BIO_CTRL_FLUSH:
-			(void)BIO_flush(inChannel->common.tls->bio);
-			(void)BIO_flush(outChannel->common.tls->bio);
+			(void)VR_BIO_flush(inChannel->common.tls->bio);
+			(void)VR_BIO_flush(outChannel->common.tls->bio);
 			status = 1;
 			break;
 
@@ -2144,8 +2144,8 @@ static long transport_bio_tsg_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 
 static int transport_bio_tsg_new(BIO* bio)
 {
-	BIO_set_init(bio, 1);
-	BIO_set_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+	VR_BIO_set_init(bio, 1);
+	VR_BIO_set_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 	return 1;
 }
 
@@ -2160,16 +2160,16 @@ BIO_METHOD* BIO_s_tsg(void)
 
 	if (bio_methods == NULL)
 	{
-		if (!(bio_methods = BIO_meth_new(BIO_TYPE_TSG, "TSGateway")))
+		if (!(bio_methods = VR_BIO_meth_new(BIO_TYPE_TSG, "TSGateway")))
 			return NULL;
 
-		BIO_meth_set_write(bio_methods, transport_bio_tsg_write);
-		BIO_meth_set_read(bio_methods, transport_bio_tsg_read);
-		BIO_meth_set_puts(bio_methods, transport_bio_tsg_puts);
-		BIO_meth_set_gets(bio_methods, transport_bio_tsg_gets);
-		BIO_meth_set_ctrl(bio_methods, transport_bio_tsg_ctrl);
-		BIO_meth_set_create(bio_methods, transport_bio_tsg_new);
-		BIO_meth_set_destroy(bio_methods, transport_bio_tsg_free);
+		VR_BIO_meth_set_write(bio_methods, transport_bio_tsg_write);
+		VR_BIO_meth_set_read(bio_methods, transport_bio_tsg_read);
+		VR_BIO_meth_set_puts(bio_methods, transport_bio_tsg_puts);
+		VR_BIO_meth_set_gets(bio_methods, transport_bio_tsg_gets);
+		VR_BIO_meth_set_ctrl(bio_methods, transport_bio_tsg_ctrl);
+		VR_BIO_meth_set_create(bio_methods, transport_bio_tsg_new);
+		VR_BIO_meth_set_destroy(bio_methods, transport_bio_tsg_free);
 	}
 
 	return bio_methods;

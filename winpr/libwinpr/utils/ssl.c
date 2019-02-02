@@ -267,7 +267,7 @@ static BOOL CALLBACK _winpr_openssl_initialize(PINIT_ONCE once, PVOID param, PVO
 	OpenSSL_add_all_ciphers();
 #else
 
-	if (OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS |
+	if (VR_OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS |
 	                     OPENSSL_INIT_LOAD_CRYPTO_STRINGS |
 	                     OPENSSL_INIT_ADD_ALL_CIPHERS |
 	                     OPENSSL_INIT_ADD_ALL_DIGESTS |
@@ -284,9 +284,9 @@ static BOOL CALLBACK _winpr_openssl_initialize(PINIT_ONCE once, PVOID param, PVO
 #else
 		WLog_DBG(TAG, "Ensuring openssl fips mode is ENabled");
 
-		if (FIPS_mode() != 1)
+		if (VR_FIPS_mode() != 1)
 		{
-			if (FIPS_mode_set(1))
+			if (VR_FIPS_mode_set(1))
 				WLog_INFO(TAG, "Openssl fips mode ENabled!");
 			else
 				WLog_ERR(TAG, "Openssl fips mode ENable failed!");
@@ -351,7 +351,7 @@ BOOL winpr_FIPSMode(void)
 #if (OPENSSL_VERSION_NUMBER < 0x10001000L) || defined(LIBRESSL_VERSION_NUMBER)
 	return FALSE;
 #else
-	return (FIPS_mode() == 1);
+	return (VR_FIPS_mode() == 1);
 #endif
 }
 

@@ -403,7 +403,7 @@ static BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 po
 	Stream_Write_UINT8(s, ':');
 	Stream_Write(s, port_str, strlen(port_str));
 	Stream_Write(s, CRLF CRLF, 4);
-	status = BIO_write(bufferedBio, Stream_Buffer(s), Stream_GetPosition(s));
+	status = VR_BIO_write(bufferedBio, Stream_Buffer(s), Stream_GetPosition(s));
 
 	if (status != Stream_GetPosition(s))
 	{
@@ -427,12 +427,12 @@ static BOOL http_proxy_connect(BIO* bufferedBio, const char* hostname, UINT16 po
 			return FALSE;
 		}
 
-		status = BIO_read(bufferedBio, (BYTE*)recv_buf + resultsize, sizeof(recv_buf) - resultsize - 1);
+		status = VR_BIO_read(bufferedBio, (BYTE*)recv_buf + resultsize, sizeof(recv_buf) - resultsize - 1);
 
 		if (status < 0)
 		{
 			/* Error? */
-			if (BIO_should_retry(bufferedBio))
+			if (VR_BIO_should_retry(bufferedBio))
 			{
 				USleep(100);
 				continue;
@@ -482,7 +482,7 @@ static int recv_socks_reply(BIO* bufferedBio, BYTE* buf, int len, char* reason, 
 
 	for (;;)
 	{
-		status = BIO_read(bufferedBio, buf, len);
+		status = VR_BIO_read(bufferedBio, buf, len);
 
 		if (status > 0)
 			break;
@@ -490,7 +490,7 @@ static int recv_socks_reply(BIO* bufferedBio, BYTE* buf, int len, char* reason, 
 		if (status < 0)
 		{
 			/* Error? */
-			if (BIO_should_retry(bufferedBio))
+			if (VR_BIO_should_retry(bufferedBio))
 			{
 				USleep(100);
 				continue;
@@ -546,7 +546,7 @@ static BOOL socks_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
 	if (nauthMethods > 1)
 		buf[3] = AUTH_M_USR_PASS;
 
-	status = BIO_write(bufferedBio, buf, writeLen);
+	status = VR_BIO_write(bufferedBio, buf, writeLen);
 
 	if (status != writeLen)
 	{
@@ -589,7 +589,7 @@ static BOOL socks_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
 				*ptr = userpassLen;
 				ptr++;
 				memcpy(ptr, proxyPassword, userpassLen);
-				status = BIO_write(bufferedBio, buf, 3 + usernameLen + userpassLen);
+				status = VR_BIO_write(bufferedBio, buf, 3 + usernameLen + userpassLen);
 
 				if (status != 3 + usernameLen + userpassLen)
 				{
@@ -626,7 +626,7 @@ static BOOL socks_proxy_connect(BIO* bufferedBio, const char* proxyUsername,
 	/* follows DST.PORT in netw. format */
 	buf[hostnlen + 5] = (port >> 8) & 0xff;
 	buf[hostnlen + 6] = port & 0xff;
-	status = BIO_write(bufferedBio, buf, hostnlen + 7);
+	status = VR_BIO_write(bufferedBio, buf, hostnlen + 7);
 
 	if (status != (hostnlen + 7))
 	{

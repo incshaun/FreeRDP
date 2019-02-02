@@ -55,25 +55,25 @@ WINPR_RC4_CTX* winpr_RC4_New_Internal(const BYTE* key, size_t keylen, BOOL overr
 
 #if defined(WITH_OPENSSL)
 
-	if (!(ctx = (WINPR_RC4_CTX*) EVP_CIPHER_CTX_new()))
+	if (!(ctx = (WINPR_RC4_CTX*) VR_EVP_CIPHER_CTX_new()))
 		return NULL;
 
-	evp = EVP_rc4();
+	evp = VR_EVP_rc4();
 
 	if (!evp)
 		return NULL;
 
-	EVP_CIPHER_CTX_init((EVP_CIPHER_CTX*) ctx);
-	EVP_EncryptInit_ex((EVP_CIPHER_CTX*) ctx, evp, NULL, NULL, NULL);
+	VR_EVP_CIPHER_CTX_init((EVP_CIPHER_CTX*) ctx);
+	VR_EVP_EncryptInit_ex((EVP_CIPHER_CTX*) ctx, evp, NULL, NULL, NULL);
 	/* EVP_CIPH_FLAG_NON_FIPS_ALLOW does not exist before openssl 1.0.1 */
 #if !(OPENSSL_VERSION_NUMBER < 0x10001000L)
 
 	if (override_fips == TRUE)
-		EVP_CIPHER_CTX_set_flags((EVP_CIPHER_CTX*) ctx, EVP_CIPH_FLAG_NON_FIPS_ALLOW);
+		VR_EVP_CIPHER_CTX_set_flags((EVP_CIPHER_CTX*) ctx, EVP_CIPH_FLAG_NON_FIPS_ALLOW);
 
 #endif
-	EVP_CIPHER_CTX_set_key_length((EVP_CIPHER_CTX*) ctx, keylen);
-	EVP_EncryptInit_ex((EVP_CIPHER_CTX*) ctx, NULL, NULL, key, NULL);
+	VR_EVP_CIPHER_CTX_set_key_length((EVP_CIPHER_CTX*) ctx, keylen);
+	VR_EVP_EncryptInit_ex((EVP_CIPHER_CTX*) ctx, NULL, NULL, key, NULL);
 #elif defined(WITH_MBEDTLS) && defined(MBEDTLS_ARC4_C)
 
 	if (!(ctx = (WINPR_RC4_CTX*) calloc(1, sizeof(mbedtls_arc4_context))))
@@ -99,7 +99,7 @@ BOOL winpr_RC4_Update(WINPR_RC4_CTX* ctx, size_t length, const BYTE* input, BYTE
 {
 #if defined(WITH_OPENSSL)
 	int outputLength;
-	EVP_CipherUpdate((EVP_CIPHER_CTX*) ctx, output, &outputLength, input, length);
+	VR_EVP_CipherUpdate((EVP_CIPHER_CTX*) ctx, output, &outputLength, input, length);
 	return TRUE;
 #elif defined(WITH_MBEDTLS) && defined(MBEDTLS_ARC4_C)
 
@@ -116,7 +116,7 @@ void winpr_RC4_Free(WINPR_RC4_CTX* ctx)
 		return;
 
 #if defined(WITH_OPENSSL)
-	EVP_CIPHER_CTX_free((EVP_CIPHER_CTX*) ctx);
+	VR_EVP_CIPHER_CTX_free((EVP_CIPHER_CTX*) ctx);
 #elif defined(WITH_MBEDTLS) && defined(MBEDTLS_ARC4_C)
 	mbedtls_arc4_free((mbedtls_arc4_context*) ctx);
 	free(ctx);
@@ -143,195 +143,195 @@ const EVP_CIPHER* winpr_openssl_get_evp_cipher(int cipher)
 	switch (cipher)
 	{
 		case WINPR_CIPHER_NULL:
-			evp = EVP_enc_null();
+			evp = VR_EVP_enc_null();
 			break;
 
 		case WINPR_CIPHER_AES_128_ECB:
-			evp = EVP_get_cipherbyname("aes-128-ecb");
+			evp = VR_EVP_get_cipherbyname("aes-128-ecb");
 			break;
 
 		case WINPR_CIPHER_AES_192_ECB:
-			evp = EVP_get_cipherbyname("aes-192-ecb");
+			evp = VR_EVP_get_cipherbyname("aes-192-ecb");
 			break;
 
 		case WINPR_CIPHER_AES_256_ECB:
-			evp = EVP_get_cipherbyname("aes-256-ecb");
+			evp = VR_EVP_get_cipherbyname("aes-256-ecb");
 			break;
 
 		case WINPR_CIPHER_AES_128_CBC:
-			evp = EVP_get_cipherbyname("aes-128-cbc");
+			evp = VR_EVP_get_cipherbyname("aes-128-cbc");
 			break;
 
 		case WINPR_CIPHER_AES_192_CBC:
-			evp = EVP_get_cipherbyname("aes-192-cbc");
+			evp = VR_EVP_get_cipherbyname("aes-192-cbc");
 			break;
 
 		case WINPR_CIPHER_AES_256_CBC:
-			evp = EVP_get_cipherbyname("aes-256-cbc");
+			evp = VR_EVP_get_cipherbyname("aes-256-cbc");
 			break;
 
 		case WINPR_CIPHER_AES_128_CFB128:
-			evp = EVP_get_cipherbyname("aes-128-cfb128");
+			evp = VR_EVP_get_cipherbyname("aes-128-cfb128");
 			break;
 
 		case WINPR_CIPHER_AES_192_CFB128:
-			evp = EVP_get_cipherbyname("aes-192-cfb128");
+			evp = VR_EVP_get_cipherbyname("aes-192-cfb128");
 			break;
 
 		case WINPR_CIPHER_AES_256_CFB128:
-			evp = EVP_get_cipherbyname("aes-256-cfb128");
+			evp = VR_EVP_get_cipherbyname("aes-256-cfb128");
 			break;
 
 		case WINPR_CIPHER_AES_128_CTR:
-			evp = EVP_get_cipherbyname("aes-128-ctr");
+			evp = VR_EVP_get_cipherbyname("aes-128-ctr");
 			break;
 
 		case WINPR_CIPHER_AES_192_CTR:
-			evp = EVP_get_cipherbyname("aes-192-ctr");
+			evp = VR_EVP_get_cipherbyname("aes-192-ctr");
 			break;
 
 		case WINPR_CIPHER_AES_256_CTR:
-			evp = EVP_get_cipherbyname("aes-256-ctr");
+			evp = VR_EVP_get_cipherbyname("aes-256-ctr");
 			break;
 
 		case WINPR_CIPHER_AES_128_GCM:
-			evp = EVP_get_cipherbyname("aes-128-gcm");
+			evp = VR_EVP_get_cipherbyname("aes-128-gcm");
 			break;
 
 		case WINPR_CIPHER_AES_192_GCM:
-			evp = EVP_get_cipherbyname("aes-192-gcm");
+			evp = VR_EVP_get_cipherbyname("aes-192-gcm");
 			break;
 
 		case WINPR_CIPHER_AES_256_GCM:
-			evp = EVP_get_cipherbyname("aes-256-gcm");
+			evp = VR_EVP_get_cipherbyname("aes-256-gcm");
 			break;
 
 		case WINPR_CIPHER_AES_128_CCM:
-			evp = EVP_get_cipherbyname("aes-128-ccm");
+			evp = VR_EVP_get_cipherbyname("aes-128-ccm");
 			break;
 
 		case WINPR_CIPHER_AES_192_CCM:
-			evp = EVP_get_cipherbyname("aes-192-ccm");
+			evp = VR_EVP_get_cipherbyname("aes-192-ccm");
 			break;
 
 		case WINPR_CIPHER_AES_256_CCM:
-			evp = EVP_get_cipherbyname("aes-256-ccm");
+			evp = VR_EVP_get_cipherbyname("aes-256-ccm");
 			break;
 
 		case WINPR_CIPHER_CAMELLIA_128_ECB:
-			evp = EVP_get_cipherbyname("camellia-128-ecb");
+			evp = VR_EVP_get_cipherbyname("camellia-128-ecb");
 			break;
 
 		case WINPR_CIPHER_CAMELLIA_192_ECB:
-			evp = EVP_get_cipherbyname("camellia-192-ecb");
+			evp = VR_EVP_get_cipherbyname("camellia-192-ecb");
 			break;
 
 		case WINPR_CIPHER_CAMELLIA_256_ECB:
-			evp = EVP_get_cipherbyname("camellia-256-ecb");
+			evp = VR_EVP_get_cipherbyname("camellia-256-ecb");
 			break;
 
 		case WINPR_CIPHER_CAMELLIA_128_CBC:
-			evp = EVP_get_cipherbyname("camellia-128-cbc");
+			evp = VR_EVP_get_cipherbyname("camellia-128-cbc");
 			break;
 
 		case WINPR_CIPHER_CAMELLIA_192_CBC:
-			evp = EVP_get_cipherbyname("camellia-192-cbc");
+			evp = VR_EVP_get_cipherbyname("camellia-192-cbc");
 			break;
 
 		case WINPR_CIPHER_CAMELLIA_256_CBC:
-			evp = EVP_get_cipherbyname("camellia-256-cbc");
+			evp = VR_EVP_get_cipherbyname("camellia-256-cbc");
 			break;
 
 		case WINPR_CIPHER_CAMELLIA_128_CFB128:
-			evp = EVP_get_cipherbyname("camellia-128-cfb128");
+			evp = VR_EVP_get_cipherbyname("camellia-128-cfb128");
 			break;
 
 		case WINPR_CIPHER_CAMELLIA_192_CFB128:
-			evp = EVP_get_cipherbyname("camellia-192-cfb128");
+			evp = VR_EVP_get_cipherbyname("camellia-192-cfb128");
 			break;
 
 		case WINPR_CIPHER_CAMELLIA_256_CFB128:
-			evp = EVP_get_cipherbyname("camellia-256-cfb128");
+			evp = VR_EVP_get_cipherbyname("camellia-256-cfb128");
 			break;
 
 		case WINPR_CIPHER_CAMELLIA_128_CTR:
-			evp = EVP_get_cipherbyname("camellia-128-ctr");
+			evp = VR_EVP_get_cipherbyname("camellia-128-ctr");
 			break;
 
 		case WINPR_CIPHER_CAMELLIA_192_CTR:
-			evp = EVP_get_cipherbyname("camellia-192-ctr");
+			evp = VR_EVP_get_cipherbyname("camellia-192-ctr");
 			break;
 
 		case WINPR_CIPHER_CAMELLIA_256_CTR:
-			evp = EVP_get_cipherbyname("camellia-256-ctr");
+			evp = VR_EVP_get_cipherbyname("camellia-256-ctr");
 			break;
 
 		case WINPR_CIPHER_CAMELLIA_128_GCM:
-			evp = EVP_get_cipherbyname("camellia-128-gcm");
+			evp = VR_EVP_get_cipherbyname("camellia-128-gcm");
 			break;
 
 		case WINPR_CIPHER_CAMELLIA_192_GCM:
-			evp = EVP_get_cipherbyname("camellia-192-gcm");
+			evp = VR_EVP_get_cipherbyname("camellia-192-gcm");
 			break;
 
 		case WINPR_CIPHER_CAMELLIA_256_GCM:
-			evp = EVP_get_cipherbyname("camellia-256-gcm");
+			evp = VR_EVP_get_cipherbyname("camellia-256-gcm");
 			break;
 
 		case WINPR_CIPHER_CAMELLIA_128_CCM:
-			evp = EVP_get_cipherbyname("camellia-128-ccm");
+			evp = VR_EVP_get_cipherbyname("camellia-128-ccm");
 			break;
 
 		case WINPR_CIPHER_CAMELLIA_192_CCM:
-			evp = EVP_get_cipherbyname("camellia-192-gcm");
+			evp = VR_EVP_get_cipherbyname("camellia-192-gcm");
 			break;
 
 		case WINPR_CIPHER_CAMELLIA_256_CCM:
-			evp = EVP_get_cipherbyname("camellia-256-gcm");
+			evp = VR_EVP_get_cipherbyname("camellia-256-gcm");
 			break;
 
 		case WINPR_CIPHER_DES_ECB:
-			evp = EVP_get_cipherbyname("des-ecb");
+			evp = VR_EVP_get_cipherbyname("des-ecb");
 			break;
 
 		case WINPR_CIPHER_DES_CBC:
-			evp = EVP_get_cipherbyname("des-cbc");
+			evp = VR_EVP_get_cipherbyname("des-cbc");
 			break;
 
 		case WINPR_CIPHER_DES_EDE_ECB:
-			evp = EVP_get_cipherbyname("des-ede-ecb");
+			evp = VR_EVP_get_cipherbyname("des-ede-ecb");
 			break;
 
 		case WINPR_CIPHER_DES_EDE_CBC:
-			evp = EVP_get_cipherbyname("des-ede-cbc");
+			evp = VR_EVP_get_cipherbyname("des-ede-cbc");
 			break;
 
 		case WINPR_CIPHER_DES_EDE3_ECB:
-			evp = EVP_get_cipherbyname("des-ede3-ecb");
+			evp = VR_EVP_get_cipherbyname("des-ede3-ecb");
 			break;
 
 		case WINPR_CIPHER_DES_EDE3_CBC:
-			evp = EVP_get_cipherbyname("des-ede3-cbc");
+			evp = VR_EVP_get_cipherbyname("des-ede3-cbc");
 			break;
 
 		case WINPR_CIPHER_ARC4_128:
-			evp = EVP_get_cipherbyname("rc4");
+			evp = VR_EVP_get_cipherbyname("rc4");
 			break;
 
 		case WINPR_CIPHER_BLOWFISH_ECB:
-			evp = EVP_get_cipherbyname("blowfish-ecb");
+			evp = VR_EVP_get_cipherbyname("blowfish-ecb");
 			break;
 
 		case WINPR_CIPHER_BLOWFISH_CBC:
-			evp = EVP_get_cipherbyname("blowfish-cbc");
+			evp = VR_EVP_get_cipherbyname("blowfish-cbc");
 			break;
 
 		case WINPR_CIPHER_BLOWFISH_CFB64:
-			evp = EVP_get_cipherbyname("blowfish-cfb64");
+			evp = VR_EVP_get_cipherbyname("blowfish-cfb64");
 			break;
 
 		case WINPR_CIPHER_BLOWFISH_CTR:
-			evp = EVP_get_cipherbyname("blowfish-ctr");
+			evp = VR_EVP_get_cipherbyname("blowfish-ctr");
 			break;
 	}
 
@@ -557,18 +557,18 @@ WINPR_CIPHER_CTX* winpr_Cipher_New(int cipher, int op, const BYTE* key, const BY
 	if (!(evp = winpr_openssl_get_evp_cipher(cipher)))
 		return NULL;
 
-	if (!(octx = EVP_CIPHER_CTX_new()))
+	if (!(octx = VR_EVP_CIPHER_CTX_new()))
 		return NULL;
 
 	operation = (op == WINPR_ENCRYPT) ? 1 : 0;
 
-	if (EVP_CipherInit_ex(octx, evp, NULL, key, iv, operation) != 1)
+	if (VR_EVP_CipherInit_ex(octx, evp, NULL, key, iv, operation) != 1)
 	{
-		EVP_CIPHER_CTX_free(octx);
+		VR_EVP_CIPHER_CTX_free(octx);
 		return NULL;
 	}
 
-	EVP_CIPHER_CTX_set_padding(octx, 0);
+	VR_EVP_CIPHER_CTX_set_padding(octx, 0);
 	ctx = (WINPR_CIPHER_CTX*) octx;
 #elif defined(WITH_MBEDTLS)
 	int key_bitlen;
@@ -619,7 +619,7 @@ BOOL winpr_Cipher_Update(WINPR_CIPHER_CTX* ctx, const BYTE* input, size_t ilen, 
 #if defined(WITH_OPENSSL)
 	int outl = (int) * olen;
 
-	if (EVP_CipherUpdate((EVP_CIPHER_CTX*) ctx, output, &outl, input, ilen) == 1)
+	if (VR_EVP_CipherUpdate((EVP_CIPHER_CTX*) ctx, output, &outl, input, ilen) == 1)
 	{
 		*olen = (size_t) outl;
 		return TRUE;
@@ -639,7 +639,7 @@ BOOL winpr_Cipher_Final(WINPR_CIPHER_CTX* ctx, BYTE* output, size_t* olen)
 #if defined(WITH_OPENSSL)
 	int outl = (int) * olen;
 
-	if (EVP_CipherFinal_ex((EVP_CIPHER_CTX*) ctx, output, &outl) == 1)
+	if (VR_EVP_CipherFinal_ex((EVP_CIPHER_CTX*) ctx, output, &outl) == 1)
 	{
 		*olen = (size_t) outl;
 		return TRUE;
@@ -660,7 +660,7 @@ void winpr_Cipher_Free(WINPR_CIPHER_CTX* ctx)
 		return;
 
 #if defined(WITH_OPENSSL)
-	EVP_CIPHER_CTX_free((EVP_CIPHER_CTX*) ctx);
+	VR_EVP_CIPHER_CTX_free((EVP_CIPHER_CTX*) ctx);
 #elif defined(WITH_MBEDTLS)
 	mbedtls_cipher_free((mbedtls_cipher_context_t*) ctx);
 	free(ctx);
@@ -684,7 +684,7 @@ int winpr_Cipher_BytesToKey(int cipher, int md, const BYTE* salt, const BYTE* da
 	const EVP_CIPHER* evp_cipher;
 	evp_md = winpr_openssl_get_evp_md(md);
 	evp_cipher = winpr_openssl_get_evp_cipher(cipher);
-	return EVP_BytesToKey(evp_cipher, evp_md, salt, data, datal, count, key, iv);
+	return VR_EVP_BytesToKey(evp_cipher, evp_md, salt, data, datal, count, key, iv);
 #elif defined(WITH_MBEDTLS)
 	int rv = 0;
 	BYTE md_buf[64];

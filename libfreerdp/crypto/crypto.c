@@ -37,7 +37,7 @@ CryptoCert crypto_cert_read(BYTE* data, UINT32 length)
 		return NULL;
 
 	/* this will move the data pointer but we don't care, we don't use it again */
-	cert->px509 = d2i_X509(NULL, (D2I_X509_CONST BYTE**) &data, length);
+	cert->px509 = VR_d2i_X509(NULL, (D2I_X509_CONST BYTE**) &data, length);
 	return cert;
 }
 
@@ -46,7 +46,7 @@ void crypto_cert_free(CryptoCert cert)
 	if (cert == NULL)
 		return;
 
-	X509_free(cert->px509);
+	VR_X509_free(cert->px509);
 	free(cert);
 }
 
@@ -56,7 +56,7 @@ BOOL crypto_cert_get_public_key(CryptoCert cert, BYTE** PublicKey, DWORD* Public
 	int length;
 	BOOL status = TRUE;
 	EVP_PKEY* pkey = NULL;
-	pkey = X509_get_pubkey(cert->px509);
+	pkey = VR_X509_get_pubkey(cert->px509);
 
 	if (!pkey)
 	{
@@ -65,7 +65,7 @@ BOOL crypto_cert_get_public_key(CryptoCert cert, BYTE** PublicKey, DWORD* Public
 		goto exit;
 	}
 
-	length = i2d_PublicKey(pkey, NULL);
+	length = VR_i2d_PublicKey(pkey, NULL);
 
 	if (length < 1)
 	{
@@ -84,11 +84,11 @@ BOOL crypto_cert_get_public_key(CryptoCert cert, BYTE** PublicKey, DWORD* Public
 		goto exit;
 	}
 
-	i2d_PublicKey(pkey, &ptr);
+	VR_i2d_PublicKey(pkey, &ptr);
 exit:
 
 	if (pkey)
-		EVP_PKEY_free(pkey);
+		VR_EVP_PKEY_free(pkey);
 
 	return status;
 }
@@ -116,40 +116,40 @@ static int crypto_rsa_common(const BYTE* input, int length, UINT32 key_length, c
 	memcpy(input_reverse, input, length);
 	crypto_reverse(input_reverse, length);
 
-	if (!(ctx = BN_CTX_new()))
+	if (!(ctx = VR_BN_CTX_new()))
 		goto fail_bn_ctx;
 
-	if (!(mod = BN_new()))
+	if (!(mod = VR_BN_new()))
 		goto fail_bn_mod;
 
-	if (!(exp = BN_new()))
+	if (!(exp = VR_BN_new()))
 		goto fail_bn_exp;
 
-	if (!(x = BN_new()))
+	if (!(x = VR_BN_new()))
 		goto fail_bn_x;
 
-	if (!(y = BN_new()))
+	if (!(y = VR_BN_new()))
 		goto fail_bn_y;
 
-	BN_bin2bn(modulus_reverse, key_length, mod);
-	BN_bin2bn(exponent_reverse, exponent_size, exp);
-	BN_bin2bn(input_reverse, length, x);
-	BN_mod_exp(y, x, exp, mod, ctx);
-	output_length = BN_bn2bin(y, output);
+	VR_BN_bin2bn(modulus_reverse, key_length, mod);
+	VR_BN_bin2bn(exponent_reverse, exponent_size, exp);
+	VR_BN_bin2bn(input_reverse, length, x);
+	VR_BN_mod_exp(y, x, exp, mod, ctx);
+	output_length = VR_BN_bn2bin(y, output);
 	crypto_reverse(output, output_length);
 
 	if (output_length < (int) key_length)
 		memset(output + output_length, 0, key_length - output_length);
 
-	BN_free(y);
+	VR_BN_free(y);
 fail_bn_y:
-	BN_clear_free(x);
+	VR_BN_clear_free(x);
 fail_bn_x:
-	BN_free(exp);
+	VR_BN_free(exp);
 fail_bn_exp:
-	BN_free(mod);
+	VR_BN_free(mod);
 fail_bn_mod:
-	BN_CTX_free(ctx);
+	VR_BN_CTX_free(ctx);
 fail_bn_ctx:
 	free(input_reverse);
 	return output_length;
@@ -217,7 +217,7 @@ char* crypto_cert_fingerprint(X509* xcert)
 	char* fp_buffer;
 	UINT32 fp_len;
 	BYTE fp[EVP_MAX_MD_SIZE];
-	X509_digest(xcert, EVP_sha1(), fp, &fp_len);
+	VR_X509_digest(xcert, VR_EVP_sha1(), fp, &fp_len);
 	fp_buffer = (char*) calloc(fp_len + 1, 3);
 
 	if (!fp_buffer)
@@ -238,26 +238,26 @@ char* crypto_cert_fingerprint(X509* xcert)
 char* crypto_print_name(X509_NAME* name)
 {
 	char* buffer = NULL;
-	BIO* outBIO = BIO_new(BIO_s_mem());
+	BIO* outBIO = VR_BIO_new(VR_BIO_s_mem());
 
-	if (X509_NAME_print_ex(outBIO, name, 0, XN_FLAG_ONELINE) > 0)
+	if (VR_X509_NAME_print_ex(outBIO, name, 0, XN_FLAG_ONELINE) > 0)
 	{
-		unsigned long size = BIO_number_written(outBIO);
+		unsigned long size = VR_BIO_number_written(outBIO);
 		buffer = calloc(1, size + 1);
 
 		if (!buffer)
 			return NULL;
 
-		BIO_read(outBIO, buffer, size);
+		VR_BIO_read(outBIO, buffer, size);
 	}
 
-	BIO_free_all(outBIO);
+	VR_BIO_free_all(outBIO);
 	return buffer;
 }
 
 char* crypto_cert_subject(X509* xcert)
 {
-	return crypto_print_name(X509_get_subject_name(xcert));
+	return crypto_print_name(VR_X509_get_subject_name(xcert));
 }
 
 char* crypto_cert_subject_common_name(X509* xcert, int* length)
@@ -268,33 +268,33 @@ char* crypto_cert_subject_common_name(X509* xcert, int* length)
 	X509_NAME* subject_name;
 	X509_NAME_ENTRY* entry;
 	ASN1_STRING* entry_data;
-	subject_name = X509_get_subject_name(xcert);
+	subject_name = VR_X509_get_subject_name(xcert);
 
 	if (subject_name == NULL)
 		return NULL;
 
-	index = X509_NAME_get_index_by_NID(subject_name, NID_commonName, -1);
+	index = VR_X509_NAME_get_index_by_NID(subject_name, NID_commonName, -1);
 
 	if (index < 0)
 		return NULL;
 
-	entry = X509_NAME_get_entry(subject_name, index);
+	entry = VR_X509_NAME_get_entry(subject_name, index);
 
 	if (entry == NULL)
 		return NULL;
 
-	entry_data = X509_NAME_ENTRY_get_data(entry);
+	entry_data = VR_X509_NAME_ENTRY_get_data(entry);
 
 	if (entry_data == NULL)
 		return NULL;
 
-	*length = ASN1_STRING_to_UTF8(&common_name_raw, entry_data);
+	*length = VR_ASN1_STRING_to_UTF8(&common_name_raw, entry_data);
 
 	if (*length < 0)
 		return NULL;
 
 	common_name = _strdup((char*)common_name_raw);
-	OPENSSL_free(common_name_raw);
+	VR_OPENSSL_free(common_name_raw);
 	return (char*) common_name;
 }
 
@@ -381,7 +381,7 @@ static void map_subject_alt_name(X509* x509, int general_name_type, general_name
 	int i;
 	int num;
 	STACK_OF(GENERAL_NAME) *gens;
-	gens = X509_get_ext_d2i(x509, NID_subject_alt_name, NULL, NULL);
+	gens = VR_X509_get_ext_d2i(x509, NID_subject_alt_name, NULL, NULL);
 
 	if (!gens)
 	{
@@ -406,7 +406,7 @@ static void map_subject_alt_name(X509* x509, int general_name_type, general_name
 		}
 	}
 
-	sk_GENERAL_NAME_pop_free(gens, GENERAL_NAME_free);
+	sk_VR_GENERAL_NAME_pop_free(gens, VR_GENERAL_NAME_free);
 }
 
 
@@ -487,11 +487,11 @@ static int extract_string(GENERAL_NAME* name, void* data, int index, int count)
 			return 1;
 	}
 
-	if ((ASN1_STRING_to_UTF8(&cstring, str)) < 0)
+	if ((VR_ASN1_STRING_to_UTF8(&cstring, str)) < 0)
 	{
 		WLog_ERR(TAG, "ASN1_STRING_to_UTF8() failed for %s: %s",
 		         general_name_type_label(name->type),
-		         ERR_error_string(ERR_get_error(), NULL));
+		         VR_ERR_error_string(VR_ERR_get_error(), NULL));
 		return 1;
 	}
 
@@ -499,7 +499,7 @@ static int extract_string(GENERAL_NAME* name, void* data, int index, int count)
 
 	if (list->allocated <= 0)
 	{
-		OPENSSL_free(cstring);
+		VR_OPENSSL_free(cstring);
 		return 0;
 	}
 
@@ -566,7 +566,7 @@ static char* object_string(ASN1_TYPE* object)
 	unsigned char* utf8String;
 	int length;
 	/* TODO: check that object.type is a string type. */
-	length = ASN1_STRING_to_UTF8(& utf8String, object->value.asn1_string);
+	length = VR_ASN1_STRING_to_UTF8(& utf8String, object->value.asn1_string);
 
 	if (length < 0)
 	{
@@ -574,7 +574,7 @@ static char* object_string(ASN1_TYPE* object)
 	}
 
 	result = (char*)_strdup((char*)utf8String);
-	OPENSSL_free(utf8String);
+	VR_OPENSSL_free(utf8String);
 	return result;
 }
 
@@ -592,7 +592,7 @@ static int extract_othername_object_as_string(GENERAL_NAME* name, void* data, in
 		return 1;
 	}
 
-	if (0 != OBJ_cmp(name->d.otherName->type_id, list->type_id))
+	if (0 != VR_OBJ_cmp(name->d.otherName->type_id, list->type_id))
 	{
 		return 1;
 	}
@@ -639,7 +639,7 @@ char* crypto_cert_get_email(X509* x509)
 	}
 
 	result = _strdup(list.strings[0]);
-	OPENSSL_free(list.strings[0]);
+	VR_OPENSSL_free(list.strings[0]);
 	string_list_free(&list);
 	return result;
 }
@@ -659,7 +659,7 @@ char* crypto_cert_get_upn(X509* x509)
 	char* result = 0;
 	object_list list;
 	object_list_initialize(&list);
-	list.type_id = OBJ_nid2obj(NID_ms_upn);
+	list.type_id = VR_OBJ_nid2obj(NID_ms_upn);
 	list.maximum = 1;
 	map_subject_alt_name(x509, GEN_OTHERNAME, extract_othername_object_as_string, &list);
 
@@ -694,7 +694,7 @@ void crypto_cert_dns_names_free(int count, int* lengths,
 		{
 			if (dns_names[i])
 			{
-				OPENSSL_free(dns_names[i]);
+				VR_OPENSSL_free(dns_names[i]);
 			}
 		}
 
@@ -751,7 +751,7 @@ char** crypto_cert_get_dns_names(X509* x509, int* count, int** lengths)
 
 char* crypto_cert_issuer(X509* xcert)
 {
-	return crypto_print_name(X509_get_issuer_name(xcert));
+	return crypto_print_name(VR_X509_get_issuer_name(xcert));
 }
 
 BOOL x509_verify_certificate(CryptoCert cert, const char* certificate_store_path)
@@ -761,7 +761,7 @@ BOOL x509_verify_certificate(CryptoCert cert, const char* certificate_store_path
 	X509_STORE* cert_ctx = NULL;
 	X509_LOOKUP* lookup = NULL;
 	X509* xcert = cert->px509;
-	cert_ctx = X509_STORE_new();
+	cert_ctx = VR_X509_STORE_new();
 
 	if (cert_ctx == NULL)
 		goto end;
@@ -769,44 +769,44 @@ BOOL x509_verify_certificate(CryptoCert cert, const char* certificate_store_path
 #if OPENSSL_VERSION_NUMBER < 0x10100000L || defined(LIBRESSL_VERSION_NUMBER)
 	OpenSSL_add_all_algorithms();
 #else
-	OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS \
+	VR_OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS \
 	                    | OPENSSL_INIT_ADD_ALL_DIGESTS \
 	                    | OPENSSL_INIT_LOAD_CONFIG, NULL);
 #endif
-	lookup = X509_STORE_add_lookup(cert_ctx, X509_LOOKUP_file());
+	lookup = VR_X509_STORE_add_lookup(cert_ctx, VR_X509_LOOKUP_file());
 
 	if (lookup == NULL)
 		goto end;
 
-	lookup = X509_STORE_add_lookup(cert_ctx, X509_LOOKUP_hash_dir());
+	lookup = VR_X509_STORE_add_lookup(cert_ctx, VR_X509_LOOKUP_hash_dir());
 
 	if (lookup == NULL)
 		goto end;
 
-	X509_LOOKUP_add_dir(lookup, NULL, X509_FILETYPE_DEFAULT);
+	VR_X509_LOOKUP_add_dir(lookup, NULL, X509_FILETYPE_DEFAULT);
 
 	if (certificate_store_path != NULL)
 	{
-		X509_LOOKUP_add_dir(lookup, certificate_store_path, X509_FILETYPE_PEM);
+		VR_X509_LOOKUP_add_dir(lookup, certificate_store_path, X509_FILETYPE_PEM);
 	}
 
-	csc = X509_STORE_CTX_new();
+	csc = VR_X509_STORE_CTX_new();
 
 	if (csc == NULL)
 		goto end;
 
-	X509_STORE_set_flags(cert_ctx, 0);
+	VR_X509_STORE_set_flags(cert_ctx, 0);
 
-	if (!X509_STORE_CTX_init(csc, cert_ctx, xcert, cert->px509chain))
+	if (!VR_X509_STORE_CTX_init(csc, cert_ctx, xcert, cert->px509chain))
 		goto end;
 
-	X509_STORE_CTX_set_purpose(csc, X509_PURPOSE_SSL_SERVER);
+	VR_X509_STORE_CTX_set_purpose(csc, X509_PURPOSE_SSL_SERVER);
 
-	if (X509_verify_cert(csc) == 1)
+	if (VR_X509_verify_cert(csc) == 1)
 		status = TRUE;
 
-	X509_STORE_CTX_free(csc);
-	X509_STORE_free(cert_ctx);
+	VR_X509_STORE_CTX_free(csc);
+	VR_X509_STORE_free(cert_ctx);
 end:
 	return status;
 }

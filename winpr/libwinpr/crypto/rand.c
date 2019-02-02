@@ -39,7 +39,7 @@
 int winpr_RAND(BYTE* output, size_t len)
 {
 #if defined(WITH_OPENSSL)
-	if (RAND_bytes(output, len) != 1)
+	if (VR_RAND_bytes(output, len) != 1)
 		return -1;
 #elif defined(WITH_MBEDTLS) && defined(MBEDTLS_HAVEGE_C)
 	mbedtls_havege_state hs;

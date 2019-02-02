@@ -334,7 +334,7 @@ SSIZE_T rpc_channel_read(RpcChannel* channel, wStream* s, size_t length)
 	if (!channel)
 		return -1;
 
-	status = BIO_read(channel->tls->bio, Stream_Pointer(s), length);
+	status = VR_BIO_read(channel->tls->bio, Stream_Pointer(s), length);
 
 	if (status > 0)
 	{
@@ -342,7 +342,7 @@ SSIZE_T rpc_channel_read(RpcChannel* channel, wStream* s, size_t length)
 		return status;
 	}
 
-	if (BIO_should_retry(channel->tls->bio))
+	if (VR_BIO_should_retry(channel->tls->bio))
 		return 0;
 
 	WLog_ERR(TAG, "rpc_channel_read: Out of retries");
@@ -669,7 +669,7 @@ static BOOL rpc_channel_tls_connect(RpcChannel* channel, int timeout)
 		if (sockfd < 0)
 			return FALSE;
 	}
-	socketBio = BIO_new(BIO_s_simple_socket());
+	socketBio = VR_BIO_new(BIO_s_simple_socket());
 
 	if (!socketBio)
 	{
@@ -677,20 +677,20 @@ static BOOL rpc_channel_tls_connect(RpcChannel* channel, int timeout)
 		return FALSE;
 	}
 
-	BIO_set_fd(socketBio, sockfd, BIO_CLOSE);
-	bufferedBio = BIO_new(BIO_s_buffered_socket());
+	VR_BIO_set_fd(socketBio, sockfd, BIO_CLOSE);
+	bufferedBio = VR_BIO_new(BIO_s_buffered_socket());
 
 	if (!bufferedBio)
 	{
-		BIO_free_all(socketBio);
+		VR_BIO_free_all(socketBio);
 		return FALSE;
 	}
 
-	bufferedBio = BIO_push(bufferedBio, socketBio);
+	bufferedBio = VR_BIO_push(bufferedBio, socketBio);
 
 	if (!BIO_set_nonblock(bufferedBio, TRUE))
 	{
-		BIO_free_all(bufferedBio);
+		VR_BIO_free_all(bufferedBio);
 		return FALSE;
 	}
 
@@ -699,7 +699,7 @@ static BOOL rpc_channel_tls_connect(RpcChannel* channel, int timeout)
 		if (!proxy_connect(settings, bufferedBio, proxyUsername, proxyPassword,	settings->GatewayHostname,
 		                   settings->GatewayPort))
 		{
-			BIO_free_all(bufferedBio);
+			VR_BIO_free_all(bufferedBio);
 			return FALSE;
 		}
 	}

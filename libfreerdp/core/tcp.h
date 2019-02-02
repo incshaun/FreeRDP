@@ -51,14 +51,14 @@
 #define BIO_C_WAIT_READ			1107
 #define BIO_C_WAIT_WRITE		1108
 
-#define BIO_set_socket(b, s, c)		BIO_ctrl(b, BIO_C_SET_SOCKET, c, s);
-#define BIO_get_socket(b, c)		BIO_ctrl(b, BIO_C_GET_SOCKET, 0, (char*) c)
-#define BIO_get_event(b, c)		BIO_ctrl(b, BIO_C_GET_EVENT, 0, (char*) c)
-#define BIO_set_nonblock(b, c)		BIO_ctrl(b, BIO_C_SET_NONBLOCK, c, NULL)
-#define BIO_read_blocked(b)		BIO_ctrl(b, BIO_C_READ_BLOCKED, 0, NULL)
-#define BIO_write_blocked(b)		BIO_ctrl(b, BIO_C_WRITE_BLOCKED, 0, NULL)
-#define BIO_wait_read(b, c)		BIO_ctrl(b, BIO_C_WAIT_READ, c, NULL)
-#define BIO_wait_write(b, c)		BIO_ctrl(b, BIO_C_WAIT_WRITE, c, NULL)
+#define BIO_set_socket(b, s, c)		VR_BIO_ctrl(b, BIO_C_SET_SOCKET, c, s);
+#define BIO_get_socket(b, c)		VR_BIO_ctrl(b, BIO_C_GET_SOCKET, 0, (char*) c)
+#define BIO_get_event(b, c)		VR_BIO_ctrl(b, BIO_C_GET_EVENT, 0, (char*) c)
+#define BIO_set_nonblock(b, c)		VR_BIO_ctrl(b, BIO_C_SET_NONBLOCK, c, NULL)
+#define BIO_read_blocked(b)		VR_BIO_ctrl(b, BIO_C_READ_BLOCKED, 0, NULL)
+#define BIO_write_blocked(b)		VR_BIO_ctrl(b, BIO_C_WRITE_BLOCKED, 0, NULL)
+#define BIO_wait_read(b, c)		VR_BIO_ctrl(b, BIO_C_WAIT_READ, c, NULL)
+#define BIO_wait_write(b, c)		VR_BIO_ctrl(b, BIO_C_WAIT_WRITE, c, NULL)
 
 FREERDP_LOCAL BIO_METHOD* BIO_s_simple_socket(void);
 FREERDP_LOCAL BIO_METHOD* BIO_s_buffered_socket(void);

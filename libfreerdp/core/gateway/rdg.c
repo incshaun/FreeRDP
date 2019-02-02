@@ -270,11 +270,11 @@ static BOOL rdg_read_all(rdpTls* tls, BYTE* buffer, int size)
 
 	while (readCount < size)
 	{
-		status = BIO_read(tls->bio, pBuffer, size - readCount);
+		status = VR_BIO_read(tls->bio, pBuffer, size - readCount);
 
 		if (status <= 0)
 		{
-			if (!BIO_should_retry(tls->bio))
+			if (!VR_BIO_should_retry(tls->bio))
 				return FALSE;
 
 			continue;
@@ -978,7 +978,7 @@ static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, i
 		return FALSE;
 	}
 
-	socketBio = BIO_new(BIO_s_simple_socket());
+	socketBio = VR_BIO_new(BIO_s_simple_socket());
 
 	if (!socketBio)
 	{
@@ -986,16 +986,16 @@ static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, i
 		return FALSE;
 	}
 
-	BIO_set_fd(socketBio, sockfd, BIO_CLOSE);
-	bufferedBio = BIO_new(BIO_s_buffered_socket());
+	VR_BIO_set_fd(socketBio, sockfd, BIO_CLOSE);
+	bufferedBio = VR_BIO_new(BIO_s_buffered_socket());
 
 	if (!bufferedBio)
 	{
-		BIO_free_all(socketBio);
+		VR_BIO_free_all(socketBio);
 		return FALSE;
 	}
 
-	bufferedBio = BIO_push(bufferedBio, socketBio);
+	bufferedBio = VR_BIO_push(bufferedBio, socketBio);
 	status = BIO_set_nonblock(bufferedBio, TRUE);
 
 	if (isProxyConnection)
@@ -1003,14 +1003,14 @@ static BOOL rdg_tls_connect(rdpRdg* rdg, rdpTls* tls, const char* peerAddress, i
 		if (!proxy_connect(settings, bufferedBio, proxyUsername, proxyPassword, settings->GatewayHostname,
 		                   (UINT16)settings->GatewayPort))
 		{
-			BIO_free_all(bufferedBio);
+			VR_BIO_free_all(bufferedBio);
 			return FALSE;
 		}
 	}
 
 	if (!status)
 	{
-		BIO_free_all(bufferedBio);
+		VR_BIO_free_all(bufferedBio);
 		return FALSE;
 	}
 
@@ -1297,12 +1297,12 @@ static BOOL rdg_process_control_packet(rdpRdg* rdg, int type, size_t packetLengt
 
 		while (readCount < payloadSize)
 		{
-			status = BIO_read(rdg->tlsOut->bio, Stream_Pointer(s),
+			status = VR_BIO_read(rdg->tlsOut->bio, Stream_Pointer(s),
 			                  (int)payloadSize - (int)readCount);
 
 			if (status <= 0)
 			{
-				if (!BIO_should_retry(rdg->tlsOut->bio))
+				if (!VR_BIO_should_retry(rdg->tlsOut->bio))
 				{
 					Stream_Free(s, TRUE);
 					return FALSE;
@@ -1358,12 +1358,12 @@ static int rdg_read_data_packet(rdpRdg* rdg, BYTE* buffer, int size)
 
 		while (readCount < sizeof(RdgPacketHeader))
 		{
-			status = BIO_read(rdg->tlsOut->bio, (BYTE*)(&header) + readCount,
+			status = VR_BIO_read(rdg->tlsOut->bio, (BYTE*)(&header) + readCount,
 			                  (int)sizeof(RdgPacketHeader) - (int)readCount);
 
 			if (status <= 0)
 			{
-				if (!BIO_should_retry(rdg->tlsOut->bio))
+				if (!VR_BIO_should_retry(rdg->tlsOut->bio))
 					return -1;
 
 				if (!readCount)
@@ -1393,12 +1393,12 @@ static int rdg_read_data_packet(rdpRdg* rdg, BYTE* buffer, int size)
 
 		while (readCount < 2)
 		{
-			status = BIO_read(rdg->tlsOut->bio, (BYTE*)(&rdg->packetRemainingCount) + readCount,
+			status = VR_BIO_read(rdg->tlsOut->bio, (BYTE*)(&rdg->packetRemainingCount) + readCount,
 			                  2 - (int)readCount);
 
 			if (status < 0)
 			{
-				if (!BIO_should_retry(rdg->tlsOut->bio))
+				if (!VR_BIO_should_retry(rdg->tlsOut->bio))
 					return -1;
 
 				BIO_wait_read(rdg->tlsOut->bio, 50);
@@ -1410,11 +1410,11 @@ static int rdg_read_data_packet(rdpRdg* rdg, BYTE* buffer, int size)
 	}
 
 	readSize = (rdg->packetRemainingCount < size ? rdg->packetRemainingCount : size);
-	status = BIO_read(rdg->tlsOut->bio, buffer, readSize);
+	status = VR_BIO_read(rdg->tlsOut->bio, buffer, readSize);
 
 	if (status <= 0)
 	{
-		if (!BIO_should_retry(rdg->tlsOut->bio))
+		if (!VR_BIO_should_retry(rdg->tlsOut->bio))
 		{
 			return -1;
 		}
@@ -1429,25 +1429,25 @@ static int rdg_read_data_packet(rdpRdg* rdg, BYTE* buffer, int size)
 static int rdg_bio_write(BIO* bio, const char* buf, int num)
 {
 	int status;
-	rdpRdg* rdg = (rdpRdg*) BIO_get_data(bio);
-	BIO_clear_flags(bio, BIO_FLAGS_WRITE);
+	rdpRdg* rdg = (rdpRdg*) VR_BIO_get_data(bio);
+	VR_BIO_clear_flags(bio, BIO_FLAGS_WRITE);
 	EnterCriticalSection(&rdg->writeSection);
 	status = rdg_write_data_packet(rdg, (const BYTE*) buf, num);
 	LeaveCriticalSection(&rdg->writeSection);
 
 	if (status < 0)
 	{
-		BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+		VR_BIO_clear_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 		return -1;
 	}
 	else if (status < num)
 	{
-		BIO_set_flags(bio, BIO_FLAGS_WRITE);
+		VR_BIO_set_flags(bio, BIO_FLAGS_WRITE);
 		WSASetLastError(WSAEWOULDBLOCK);
 	}
 	else
 	{
-		BIO_set_flags(bio, BIO_FLAGS_WRITE);
+		VR_BIO_set_flags(bio, BIO_FLAGS_WRITE);
 	}
 
 	return status;
@@ -1456,12 +1456,12 @@ static int rdg_bio_write(BIO* bio, const char* buf, int num)
 static int rdg_bio_read(BIO* bio, char* buf, int size)
 {
 	int status;
-	rdpRdg* rdg = (rdpRdg*) BIO_get_data(bio);
+	rdpRdg* rdg = (rdpRdg*) VR_BIO_get_data(bio);
 	status = rdg_read_data_packet(rdg, (BYTE*) buf, size);
 
 	if (status < 0)
 	{
-		BIO_clear_retry_flags(bio);
+		VR_BIO_clear_retry_flags(bio);
 		return -1;
 	}
 	else if (status == 0)
@@ -1472,7 +1472,7 @@ static int rdg_bio_read(BIO* bio, char* buf, int size)
 	}
 	else
 	{
-		BIO_set_flags(bio, BIO_FLAGS_READ);
+		VR_BIO_set_flags(bio, BIO_FLAGS_READ);
 	}
 
 	return status;
@@ -1496,14 +1496,14 @@ static int rdg_bio_gets(BIO* bio, char* str, int size)
 static long rdg_bio_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 {
 	long status = -1;
-	rdpRdg* rdg = (rdpRdg*) BIO_get_data(bio);
+	rdpRdg* rdg = (rdpRdg*) VR_BIO_get_data(bio);
 	rdpTls* tlsOut = rdg->tlsOut;
 	rdpTls* tlsIn = rdg->tlsIn;
 
 	if (cmd == BIO_CTRL_FLUSH)
 	{
-		(void)BIO_flush(tlsOut->bio);
-		(void)BIO_flush(tlsIn->bio);
+		(void)VR_BIO_flush(tlsOut->bio);
+		(void)VR_BIO_flush(tlsIn->bio);
 		status = 1;
 	}
 	else if (cmd == BIO_C_SET_NONBLOCK)
@@ -1554,7 +1554,7 @@ static long rdg_bio_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 		 *
 		 * See issue #3602
 		 */
-		status = BIO_ctrl(tlsOut->bio, cmd, arg1, arg2);
+		status = VR_BIO_ctrl(tlsOut->bio, cmd, arg1, arg2);
 	}
 
 	return status;
@@ -1562,8 +1562,8 @@ static long rdg_bio_ctrl(BIO* bio, int cmd, long arg1, void* arg2)
 
 static int rdg_bio_new(BIO* bio)
 {
-	BIO_set_init(bio, 1);
-	BIO_set_flags(bio, BIO_FLAGS_SHOULD_RETRY);
+	VR_BIO_set_init(bio, 1);
+	VR_BIO_set_flags(bio, BIO_FLAGS_SHOULD_RETRY);
 	return 1;
 }
 
@@ -1579,16 +1579,16 @@ static BIO_METHOD* BIO_s_rdg(void)
 
 	if (bio_methods == NULL)
 	{
-		if (!(bio_methods = BIO_meth_new(BIO_TYPE_TSG, "RDGateway")))
+		if (!(bio_methods = VR_BIO_meth_new(BIO_TYPE_TSG, "RDGateway")))
 			return NULL;
 
-		BIO_meth_set_write(bio_methods, rdg_bio_write);
-		BIO_meth_set_read(bio_methods, rdg_bio_read);
-		BIO_meth_set_puts(bio_methods, rdg_bio_puts);
-		BIO_meth_set_gets(bio_methods, rdg_bio_gets);
-		BIO_meth_set_ctrl(bio_methods, rdg_bio_ctrl);
-		BIO_meth_set_create(bio_methods, rdg_bio_new);
-		BIO_meth_set_destroy(bio_methods, rdg_bio_free);
+		VR_BIO_meth_set_write(bio_methods, rdg_bio_write);
+		VR_BIO_meth_set_read(bio_methods, rdg_bio_read);
+		VR_BIO_meth_set_puts(bio_methods, rdg_bio_puts);
+		VR_BIO_meth_set_gets(bio_methods, rdg_bio_gets);
+		VR_BIO_meth_set_ctrl(bio_methods, rdg_bio_ctrl);
+		VR_BIO_meth_set_create(bio_methods, rdg_bio_new);
+		VR_BIO_meth_set_destroy(bio_methods, rdg_bio_free);
 	}
 
 	return bio_methods;
@@ -1666,12 +1666,12 @@ rdpRdg* rdg_new(rdpContext* context)
 			}
 		}
 
-		rdg->frontBio = BIO_new(BIO_s_rdg());
+		rdg->frontBio = VR_BIO_new(BIO_s_rdg());
 
 		if (!rdg->frontBio)
 			goto rdg_alloc_error;
 
-		BIO_set_data(rdg->frontBio, rdg);
+		VR_BIO_set_data(rdg->frontBio, rdg);
 		InitializeCriticalSection(&rdg->writeSection);
 	}
 
@@ -1692,7 +1692,7 @@ void rdg_free(rdpRdg* rdg)
 	ntlm_free(rdg->ntlm);
 
 	if (!rdg->attached)
-		BIO_free_all(rdg->frontBio);
+		VR_BIO_free_all(rdg->frontBio);
 
 	DeleteCriticalSection(&rdg->writeSection);
 	free(rdg);
