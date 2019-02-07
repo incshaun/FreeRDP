@@ -291,8 +291,10 @@ if (OPENSSL_INCLUDE_DIR)
   if (_OPENSSL_VERSION)
     set(OPENSSL_VERSION "${_OPENSSL_VERSION}")
   elseif(OPENSSL_INCLUDE_DIR AND EXISTS "${OPENSSL_INCLUDE_DIR}/openssl/opensslv.h")
-    file(STRINGS "${OPENSSL_INCLUDE_DIR}/openssl/opensslv.h" openssl_version_str
-         REGEX "^#.?define[\t ]+OPENSSL_VERSION_NUMBER[\t ]+0x([0-9a-fA-F])+.*")
+#     file(STRINGS "${OPENSSL_INCLUDE_DIR}/openssl/opensslv.h" openssl_version_str
+#          REGEX "^#.?define[\t ]+OPENSSL_VERSION_NUMBER[\t ]+0x([0-9a-fA-F])+.*")
+     file(STRINGS "${OPENSSL_INCLUDE_DIR}/openssl/opensslv.h" openssl_version_str
+          REGEX "^#.?define[\t ]+OPENSSL_VERSION.*[\t ].*")
 
     # The version number is encoded as 0xMNNFFPPS: major minor fix patch status
     # The status gives if this is a developer or prerelease and is ignored here.
@@ -301,25 +303,34 @@ if (OPENSSL_INCLUDE_DIR)
     # indicates the bug fix state, which 00 -> nothing, 01 -> a, 02 -> b and so
     # on.
 
-    string(REGEX REPLACE "^.*OPENSSL_VERSION_NUMBER[\t ]+0x([0-9a-fA-F])([0-9a-fA-F][0-9a-fA-F])([0-9a-fA-F][0-9a-fA-F])([0-9a-fA-F][0-9a-fA-F])([0-9a-fA-F]).*$"
-           "\\1;\\2;\\3;\\4;\\5" OPENSSL_VERSION_LIST "${openssl_version_str}")
-    list(GET OPENSSL_VERSION_LIST 0 OPENSSL_VERSION_MAJOR)
-    list(GET OPENSSL_VERSION_LIST 1 OPENSSL_VERSION_MINOR)
-    from_hex("${OPENSSL_VERSION_MINOR}" OPENSSL_VERSION_MINOR)
-    list(GET OPENSSL_VERSION_LIST 2 OPENSSL_VERSION_FIX)
-    from_hex("${OPENSSL_VERSION_FIX}" OPENSSL_VERSION_FIX)
-    list(GET OPENSSL_VERSION_LIST 3 OPENSSL_VERSION_PATCH)
+#     string(REGEX REPLACE "^.*OPENSSL_VERSION_NUMBER[\t ]+0x([0-9a-fA-F])([0-9a-fA-F][0-9a-fA-F])([0-9a-fA-F][0-9a-fA-F])([0-9a-fA-F][0-9a-fA-F])([0-9a-fA-F]).*$"
+#            "\\1;\\2;\\3;\\4;\\5" OPENSSL_VERSION_LIST "${openssl_version_str}")
+     string(REGEX REPLACE ".*#.?define[\t ]+OPENSSL_VERSION_MAJOR[\t ]+([0-9a-fA-F]).*"
+            "\\1" OPENSSL_VERSION_MAJOR "${openssl_version_str}")
+     string(REGEX REPLACE ".*#.?define[\t ]+OPENSSL_VERSION_MINOR[\t ]+([0-9a-fA-F]).*"
+            "\\1" OPENSSL_VERSION_MINOR "${openssl_version_str}")
+     string(REGEX REPLACE ".*#.?define[\t ]+OPENSSL_VERSION_PATCH[\t ]+([0-9a-fA-F]).*"
+            "\\1" OPENSSL_VERSION_FIX "${openssl_version_str}")
+     string(REGEX REPLACE ".*#.?define[\t ]+OPENSSL_VERSION_PRE_RELEASE[\t ]+\"(.*)\".*"
+            "\\1" OPENSSL_VERSION_PATCH "${openssl_version_str}")
+#     list(GET OPENSSL_VERSION_LIST 0 OPENSSL_VERSION_MAJOR)
+#     list(GET OPENSSL_VERSION_LIST 1 OPENSSL_VERSION_MINOR)
+#     from_hex("${OPENSSL_VERSION_MINOR}" OPENSSL_VERSION_MINOR)
+#     list(GET OPENSSL_VERSION_LIST 2 OPENSSL_VERSION_FIX)
+#     from_hex("${OPENSSL_VERSION_FIX}" OPENSSL_VERSION_FIX)
+#     list(GET OPENSSL_VERSION_LIST 3 OPENSSL_VERSION_PATCH)
 
-    if (NOT OPENSSL_VERSION_PATCH STREQUAL "00")
-      from_hex("${OPENSSL_VERSION_PATCH}" _tmp)
-      # 96 is the ASCII code of 'a' minus 1
-      math(EXPR OPENSSL_VERSION_PATCH_ASCII "${_tmp} + 96")
-      unset(_tmp)
-      # Once anyone knows how OpenSSL would call the patch versions beyond 'z'
-      # this should be updated to handle that, too. This has not happened yet
-      # so it is simply ignored here for now.
-      string(ASCII "${OPENSSL_VERSION_PATCH_ASCII}" OPENSSL_VERSION_PATCH_STRING)
-    endif (NOT OPENSSL_VERSION_PATCH STREQUAL "00")
+#     if (NOT OPENSSL_VERSION_PATCH STREQUAL "00")
+#       from_hex("${OPENSSL_VERSION_PATCH}" _tmp)
+#       # 96 is the ASCII code of 'a' minus 1
+#       math(EXPR OPENSSL_VERSION_PATCH_ASCII "${_tmp} + 96")
+#       unset(_tmp)
+#       # Once anyone knows how OpenSSL would call the patch versions beyond 'z'
+#       # this should be updated to handle that, too. This has not happened yet
+#       # so it is simply ignored here for now.
+#       string(ASCII "${OPENSSL_VERSION_PATCH_ASCII}" OPENSSL_VERSION_PATCH_STRING)
+#     endif (NOT OPENSSL_VERSION_PATCH STREQUAL "00")
+    set(OPENSSL_VERSION_PATCH_STRING "${OPENSSL_VERSION_PATCH}" )
 
     set(OPENSSL_VERSION "${OPENSSL_VERSION_MAJOR}.${OPENSSL_VERSION_MINOR}.${OPENSSL_VERSION_FIX}${OPENSSL_VERSION_PATCH_STRING}")
   endif (_OPENSSL_VERSION)
